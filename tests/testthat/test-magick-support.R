@@ -157,3 +157,16 @@ test_that(".cleanup_temp_files handles non-existent files gracefully", {
   # Should not error
   expect_no_error(odiffr:::.cleanup_temp_files(resolved))
 })
+
+test_that(".write_temp_image errors when magick is not available", {
+  # Mock .has_magick to return FALSE
+  testthat::local_mocked_bindings(
+    .has_magick = function() FALSE,
+    .package = "odiffr"
+  )
+
+  expect_error(
+    odiffr:::.write_temp_image("anything"),
+    "magick.*package is required"
+  )
+})

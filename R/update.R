@@ -105,7 +105,7 @@ odiffr_update <- function(version = "latest", force = FALSE) {
 
   tryCatch(
     {
-      utils::download.file(
+      download_file_internal(
         url = url,
         destfile = target_path,
         mode = "wb",
@@ -154,6 +154,12 @@ odiffr_update <- function(version = "latest", force = FALSE) {
     },
     error = function(e) NULL
   )
+}
+
+# Internal: Wrapper for download.file (enables mocking in tests)
+# Note: Named without leading dot so testthat::with_mocked_bindings can find it
+download_file_internal <- function(url, destfile, mode = "wb", quiet = FALSE) {
+  utils::download.file(url = url, destfile = destfile, mode = mode, quiet = quiet)
 }
 
 # Internal: Get asset name for platform

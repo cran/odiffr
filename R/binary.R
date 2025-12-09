@@ -82,12 +82,12 @@ odiff_version <- function() {
   tryCatch(
     {
       path <- find_odiff()
-      result <- system2(path, "--help", stdout = TRUE, stderr = TRUE)
-      # odiff help output typically starts with version info
+      result <- system2(path, "--version", stdout = TRUE, stderr = TRUE)
+      # odiff --version output: "odiff X.Y.Z - SIMD first pixel-by-pixel..."
       # Parse first line for version
       version_line <- result[1]
       if (grepl("odiff", version_line, ignore.case = TRUE)) {
-        # Try to extract version number
+        # Try to extract version number (e.g., "3.1.0" or "4.2.1")
         version <- gsub(".*?([0-9]+\\.[0-9]+\\.[0-9]+).*", "\\1", version_line)
         if (nzchar(version) && version != version_line) {
           return(version)

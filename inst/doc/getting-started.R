@@ -71,6 +71,108 @@ odiff_info()
 # results[!results$match, ]
 
 ## ----eval=FALSE---------------------------------------------------------------
+# # Compare baseline/ vs current/ directories
+# results <- compare_image_dirs("baseline/", "current/")
+# 
+# # Include subdirectories
+# results <- compare_image_dirs("baseline/", "current/", recursive = TRUE)
+# 
+# # Only compare PNG files
+# results <- compare_image_dirs("baseline/", "current/", pattern = "\\.png$")
+
+## ----eval=FALSE---------------------------------------------------------------
+# results <- compare_image_dirs("baseline/", "current/")
+# 
+# # Get only failures
+# failures <- failed_pairs(results)
+# nrow(failures)
+# #> [1] 8
+# 
+# # Get only passes
+# passes <- passed_pairs(results)
+# nrow(passes)
+# #> [1] 42
+
+## ----eval=FALSE---------------------------------------------------------------
+# results <- compare_image_dirs("baseline/", "current/")
+# summary(results)
+# #> odiffr batch comparison: 50 pairs
+# #> ───────────────────────────────────
+# #> Passed: 42 (84.0%)
+# #> Failed: 8 (16.0%)
+# #>   - pixel-diff: 6
+# #>   - layout-diff: 2
+# #>
+# #> Diff statistics (failed pairs):
+# #>   Min:    0.15%
+# #>   Median: 2.34%
+# #>   Mean:   3.21%
+# #>   Max:    12.45%
+# #>
+# #> Worst offenders:
+# #>   1. page_a.png (12.45%, 1245 pixels)
+# #>   2. page_b.png (8.32%, 832 pixels)
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Compare in parallel on macOS/Linux
+# results <- compare_images_batch(pairs, parallel = TRUE)
+# 
+# # Also works with directory comparison
+# results <- compare_image_dirs("baseline/", "current/", parallel = TRUE)
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Run batch comparison with diff images
+# results <- compare_image_dirs(
+#   "baseline/",
+#   "current/",
+#   diff_dir = "diffs/"
+# )
+# 
+# # Generate HTML report (links to diff images)
+# batch_report(results, output_file = "qa-report.html")
+# 
+# # Self-contained report with embedded images (for sharing)
+# batch_report(results, output_file = "qa-report.html", embed = TRUE)
+# 
+# # Portable report with relative paths (move report + diffs together)
+# batch_report(results, output_file = "output/report.html", relative_paths = TRUE)
+# 
+# # Customize the report
+# batch_report(
+#   results,
+#   output_file = "report.html",
+#   title = "Dashboard Visual Regression",
+#   n_worst = 20,        # Show top 20 failures
+#   show_all = TRUE      # Include all comparisons, not just failures
+# )
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Compare and generate report in one step
+# compare_dirs_report("baseline/", "current/")
+# # -> Creates diffs/ directory with diff images and report.html
+# 
+# # Self-contained report with embedded images (recommended for sharing)
+# compare_dirs_report("baseline/", "current/", embed = TRUE)
+# 
+# # See all comparisons, not just failures
+# compare_dirs_report("baseline/", "current/", show_all = TRUE)
+# 
+# # Portable report with relative image paths
+# compare_dirs_report("baseline/", "current/", relative_paths = TRUE)
+# 
+# # Combine options: parallel processing with embedded report
+# compare_dirs_report("baseline/", "current/", parallel = TRUE, embed = TRUE)
+
+## ----eval=FALSE---------------------------------------------------------------
+# # In your CI script
+# results <- compare_dirs_report("baseline/", "current/")
+# 
+# # Fail the build if any images differ
+# if (any(!results$match)) {
+#   stop("Visual regression detected! See diffs/ for details.")
+# }
+
+## ----eval=FALSE---------------------------------------------------------------
 # library(magick)
 # 
 # # Read and preprocess images
@@ -134,21 +236,36 @@ odiffr_cache_path()
 # library(odiffr)
 # 
 # test_that("dashboard renders correctly", {
-#   # Generate current screenshot
+#   skip_if_no_odiff()
+# 
+#   # Generate current screenshot (using your preferred method)
 #   webshot2::webshot("http://localhost:3838/dashboard", "current.png")
 # 
-#   # Compare to baseline
-#   result <- compare_images(
-#     "baselines/dashboard.png",
+#   # Compare to baseline using expect_images_match()
+#   expect_images_match(
 #     "current.png",
-#     diff_output = "diffs/dashboard_diff.png",
+#     "baselines/dashboard.png",
 #     threshold = 0.1,
 #     antialiasing = TRUE
 #   )
-# 
-#   expect_true(result$match,
-#     info = sprintf("%.2f%% pixels differ", result$diff_percentage))
 # })
+# 
+# test_that("button changes on hover", {
+#   skip_if_no_odiff()
+# 
+#   # Assert that images are different
+#   expect_images_differ(
+#     "button_normal.png",
+#     "button_hover.png"
+#   )
+# })
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Disable diff image saving
+# options(odiffr.save_diff = FALSE)
+# 
+# # Use a custom directory
+# options(odiffr.diff_dir = "my_diffs/")
 
 ## ----eval=FALSE---------------------------------------------------------------
 # # Pin to a specific validated binary

@@ -122,10 +122,18 @@ compare_images <- function(img1, img2,
 #' @param diff_dir Directory to save diff images. If `NULL`, no diff images
 #'   are created. If provided, diff images are named based on the input
 #'   file names.
+#' @param parallel Logical; if `TRUE`, compare images in parallel using
+#'   multiple CPU cores. Uses `parallel::mclapply` on Unix systems (macOS,
+#'   Linux) and falls back to sequential processing on Windows. Default is
+#'   `FALSE`.
 #' @param ... Additional arguments passed to [compare_images()].
 #'
-#' @return A tibble (if available) or data.frame with one row per comparison,
-#'   containing all columns from [compare_images()] plus a `pair_id` column.
+#' @return A tibble (if available) or data.frame with class `odiffr_batch`,
+#'   containing one row per comparison with all columns from [compare_images()]
+#'   plus a `pair_id` column. Use [summary()] to get aggregate statistics.
+#'
+#' @seealso [summary.odiffr_batch()] for summarizing batch results,
+#'   [compare_image_dirs()] for directory-based comparison.
 #'
 #' @export
 #'
@@ -140,10 +148,13 @@ compare_images <- function(img1, img2,
 #' # Compare all pairs
 #' results <- compare_images_batch(pairs, diff_dir = "diffs/")
 #'
+#' # Compare in parallel (Unix only)
+#' results <- compare_images_batch(pairs, parallel = TRUE)
+#'
 #' # Check which comparisons failed
 #' results[!results$match, ]
 #' }
-compare_images_batch <- function(pairs, diff_dir = NULL, ...) {
+compare_images_batch <- function(pairs, diff_dir = NULL, parallel = FALSE, ...) {
   # Handle data.frame input
   if (is.data.frame(pairs)) {
     if (!all(c("img1", "img2") %in% names(pairs))) {
@@ -164,16 +175,16 @@ compare_images_batch <- function(pairs, diff_dir = NULL, ...) {
     dir.create(diff_dir, recursive = TRUE)
   }
 
-  # Compare each pair
-  results <- lapply(seq_along(pairs_list), function(i) {
+  # Define comparison function for each pair
+  compare_one <- function(i) {
     pair <- pairs_list[[i]]
 
     # Generate diff output path if diff_dir is provided
     diff_output <- NULL
     if (!is.null(diff_dir)) {
-      # Use basename of img2 for diff filename
+      # Include index to prevent filename collisions (especially in parallel)
       base_name <- tools::file_path_sans_ext(basename(pair$img2))
-      diff_output <- file.path(diff_dir, paste0(base_name, "_diff.png"))
+      diff_output <- file.path(diff_dir, sprintf("%03d_%s_diff.png", i, base_name))
     }
 
     result <- compare_images(
@@ -186,7 +197,33 @@ compare_images_batch <- function(pairs, diff_dir = NULL, ...) {
     # Add pair_id
     result$pair_id <- i
     result
-  })
+  }
+
+  # Compare pairs (parallel or sequential)
+  if (isTRUE(parallel) && .Platform$OS.type == "unix") {
+    # Use parallel::mclapply on Unix systems
+    # Respect mc.cores option if set, otherwise detect cores
+    n_cores <- getOption("mc.cores", parallel::detectCores(logical = FALSE))
+    if (is.na(n_cores) || n_cores < 1) n_cores <- 1
+
+    # Cap cores by number of pairs (no point spawning more workers than tasks)
+    n_cores <- min(n_cores, length(pairs_list))
+
+    # Respect CRAN check limits (max 2 cores during R CMD check)
+    check_limit <- Sys.getenv("_R_CHECK_LIMIT_CORES_", unset = "")
+    if (nzchar(check_limit) && check_limit %in% c("TRUE", "true", "warn", "false")) {
+      n_cores <- min(n_cores, 2L)
+    }
+
+    results <- parallel::mclapply(
+      seq_along(pairs_list),
+      compare_one,
+      mc.cores = n_cores
+    )
+  } else {
+    # Sequential processing (Windows or parallel = FALSE)
+    results <- lapply(seq_along(pairs_list), compare_one)
+  }
 
   # Combine results
   combined <- do.call(rbind, results)
@@ -195,10 +232,235 @@ compare_images_batch <- function(pairs, diff_dir = NULL, ...) {
   col_order <- c("pair_id", setdiff(names(combined), "pair_id"))
   combined <- combined[, col_order]
 
+
+  # Add class for S3 methods (summary, etc.)
   # Return tibble if available
   if (requireNamespace("tibble", quietly = TRUE)) {
-    tibble::as_tibble(combined)
+    result <- tibble::as_tibble(combined)
   } else {
-    combined
+    result <- combined
   }
+  class(result) <- c("odiffr_batch", class(result))
+  result
+}
+
+#' Compare Images in Two Directories
+#'
+#' Compare all images in a baseline directory against corresponding images in a
+#' current directory. Files are matched by relative path (including
+#' subdirectories when `recursive = TRUE`).
+#'
+#' @param baseline_dir Path to the directory containing baseline images.
+#' @param current_dir Path to the directory containing current images to
+#'   compare against baseline.
+#' @param pattern Regular expression pattern to match image files. Default
+#'   matches common image formats (PNG, JPEG, WEBP, TIFF).
+#' @param recursive Logical; if `TRUE`, search subdirectories recursively.
+#'   Default is `FALSE`.
+#' @param diff_dir Directory to save diff images. If `NULL`, no diff images
+#'   are created.
+#' @param parallel Logical; if `TRUE`, compare images in parallel. See
+#'   [compare_images_batch()] for details.
+#' @param ... Additional arguments passed to [compare_images_batch()].
+#'
+#' @return A tibble (if available) or data.frame with one row per comparison,
+#'   containing all columns from [compare_images()] plus a `pair_id` column.
+#'
+#' @details
+#' The baseline directory is the source of truth. For each image found in
+#' `baseline_dir` matching `pattern`:
+#' \itemize{
+#'   \item If a corresponding file exists in `current_dir` (same relative
+#'     path), it is included in the comparison.
+#'   \item If the file is missing from `current_dir`, a warning is issued and
+#'     the file is excluded from results.
+#' }
+#'
+#' Files that exist only in `current_dir` (not in `baseline_dir`) are not
+#' compared, but a message is emitted noting how many such files were found.
+#'
+#' @seealso [compare_images_batch()] for comparing explicit pairs,
+#'   [compare_images()] for single comparisons.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Compare all images in two directories
+#' results <- compare_image_dirs("baseline/", "current/")
+#'
+#' # Only compare PNG files
+#' results <- compare_image_dirs("baseline/", "current/", pattern = "\\.png$")
+#'
+#' # Include subdirectories and save diff images
+#' results <- compare_image_dirs(
+#'   "baseline/",
+#'   "current/",
+#'   recursive = TRUE,
+#'   diff_dir = "diffs/"
+#' )
+#'
+#' # Check which comparisons failed
+#' results[!results$match, ]
+#' }
+compare_image_dirs <- function(baseline_dir,
+                               current_dir,
+                               pattern = "\\.(png|jpe?g|webp|tiff?)$",
+                               recursive = FALSE,
+                               diff_dir = NULL,
+                               parallel = FALSE,
+                               ...) {
+  # Validate directories
+  .validate_directory(baseline_dir, "baseline_dir")
+  .validate_directory(current_dir, "current_dir")
+
+  # Find baseline images
+  baseline_files <- list.files(
+    baseline_dir,
+    pattern = pattern,
+    recursive = recursive,
+    full.names = FALSE,
+    ignore.case = TRUE
+  )
+
+  if (length(baseline_files) == 0) {
+    stop("No images found in baseline_dir matching pattern: ", pattern,
+         call. = FALSE)
+  }
+
+  # Check for unmatched files in current_dir
+  current_files <- list.files(
+    current_dir,
+    pattern = pattern,
+    recursive = recursive,
+    full.names = FALSE,
+    ignore.case = TRUE
+  )
+  unmatched <- setdiff(current_files, baseline_files)
+  if (length(unmatched) > 0) {
+    shown <- unmatched[seq_len(min(3, length(unmatched)))]
+    message(
+      sprintf("Note: %d file(s) in current_dir have no baseline: %s%s",
+              length(unmatched),
+              paste(shown, collapse = ", "),
+              if (length(unmatched) > 3) ", ..." else "")
+    )
+  }
+
+  # Build pairs
+  pairs <- data.frame(
+    img1 = file.path(baseline_dir, baseline_files),
+    img2 = file.path(current_dir, baseline_files),
+    stringsAsFactors = FALSE
+  )
+
+  # Check for missing current files
+  missing <- !file.exists(pairs$img2)
+  if (any(missing)) {
+    n_missing <- sum(missing)
+    missing_files <- baseline_files[missing]
+    shown <- missing_files[seq_len(min(3, n_missing))]
+    warning(
+      n_missing, " file(s) missing from current_dir: ",
+      paste(shown, collapse = ", "),
+      if (n_missing > 3) "..." else "",
+      call. = FALSE
+    )
+  }
+
+  # Filter to existing pairs only
+  pairs <- pairs[!missing, , drop = FALSE]
+
+  if (nrow(pairs) == 0) {
+    stop("No matching image pairs found.", call. = FALSE)
+  }
+
+  # Delegate to batch
+  compare_images_batch(pairs, diff_dir = diff_dir, parallel = parallel, ...)
+}
+
+# Internal helper to validate directory arguments
+.validate_directory <- function(path, arg_name) {
+  if (!is.character(path) || length(path) != 1) {
+    stop(arg_name, " must be a single directory path.", call. = FALSE)
+  }
+  if (!dir.exists(path)) {
+    stop(arg_name, " does not exist: ", path, call. = FALSE)
+  }
+}
+
+#' Compare Directories and Generate HTML Report
+#'
+#' Convenience function that compares all images in two directories and
+#' generates an HTML report in one step.
+#'
+#' @inheritParams compare_image_dirs
+#' @param output_file Path for the HTML report. Defaults to
+#'   `file.path(diff_dir, "report.html")`.
+#' @param title Title for the HTML report.
+#' @param embed Logical; if `TRUE`, embed images as base64 data URIs for a
+#'   self-contained report. If `FALSE` (default), link to image files.
+#' @param relative_paths Logical; if `TRUE`, use relative paths for images
+#'   in the HTML report. Makes reports portable without embedding. Ignored
+#'   when `embed = TRUE`. Default: `FALSE`.
+#' @param n_worst Number of worst offenders to display in the report.
+#' @param show_all Logical; if `TRUE`, show all comparisons in the report,
+#'   not just failures.
+#' @param ... Additional arguments passed to [compare_image_dirs()] (e.g.
+#'   `threshold`, `antialiasing`, `pattern`, `recursive`).
+#'
+#' @return The `odiffr_batch` results (invisibly). The HTML report is written
+#'   to `output_file` as a side effect.
+#'
+#' @seealso [compare_image_dirs()], [batch_report()]
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # One-liner for QA workflow
+#' compare_dirs_report("baseline/", "current/")
+#' # -> Creates diffs/ directory with diff images and report.html
+#'
+#' # With parallel processing and embedded images
+#' compare_dirs_report("baseline/", "current/", parallel = TRUE, embed = TRUE)
+#'
+#' # Pass comparison options via ...
+#' compare_dirs_report("baseline/", "current/", threshold = 0.1, antialiasing = TRUE)
+#' }
+compare_dirs_report <- function(baseline_dir,
+                                current_dir,
+                                diff_dir = "diffs",
+                                output_file = file.path(diff_dir, "report.html"),
+                                parallel = FALSE,
+                                title = "odiffr Comparison Report",
+                                embed = FALSE,
+                                relative_paths = FALSE,
+                                n_worst = 10,
+                                show_all = FALSE,
+                                ...) {
+  results <- compare_image_dirs(
+    baseline_dir,
+    current_dir,
+    diff_dir = diff_dir,
+    parallel = parallel,
+    ...
+  )
+
+  # Ensure parent directory of output_file exists
+  output_dir <- dirname(output_file)
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
+
+  batch_report(
+    results,
+    output_file = output_file,
+    title = title,
+    embed = embed,
+    relative_paths = relative_paths,
+    n_worst = n_worst,
+    show_all = show_all
+  )
+  invisible(results)
 }

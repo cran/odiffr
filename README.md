@@ -16,6 +16,8 @@ Fast pixel-by-pixel image comparison for R, powered by [odiff](https://github.co
 - **Cross-platform**: Works on Windows, macOS (Intel & Apple Silicon), and Linux
 - **Flexible**: Accepts file paths or magick-image objects
 - **Configurable**: Threshold, antialiasing detection, region ignoring
+- **HTML reports**: Generate standalone QA reports with `batch_report()`
+- **testthat integration**: `expect_images_match()` and `expect_images_differ()` for visual regression testing
 
 ## Installation
 
@@ -114,7 +116,82 @@ pairs <- data.frame(
 )
 
 results <- compare_images_batch(pairs, diff_dir = "diffs/")
-results[!results$match, ]  # Show failures
+
+# Extract failures or passes
+failed_pairs(results)
+passed_pairs(results)
+
+# Compare entire directories
+results <- compare_image_dirs("baseline/", "current/", recursive = TRUE)
+
+# Get summary statistics
+summary(results)
+#> odiffr batch comparison: 50 pairs
+#> Passed: 42 (84.0%)
+#> Failed: 8 (16.0%)
+
+# Use parallel processing (Unix only)
+results <- compare_images_batch(pairs, parallel = TRUE)
+```
+
+### HTML Reports
+
+```r
+# One-liner: compare directories and generate HTML report
+compare_dirs_report("baseline/", "current/")
+# -> Creates diffs/ directory with diff images and report.html
+
+# Or step-by-step for more control
+results <- compare_image_dirs("baseline/", "current/", diff_dir = "diffs/")
+batch_report(results, output_file = "qa-report.html")
+
+# Self-contained report with embedded images
+batch_report(results, output_file = "qa-report.html", embed = TRUE)
+
+# Portable report with relative image paths
+batch_report(results, output_file = "output/report.html", relative_paths = TRUE)
+```
+
+### CI Integration
+
+Run visual regression tests in GitHub Actions and upload diff artifacts:
+
+```yaml
+# .github/workflows/visual-regression.yaml
+name: Visual Regression
+
+on: [push, pull_request]
+
+jobs:
+  visual-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+
+      - name: Install dependencies
+        run: |
+          install.packages(c("odiffr", "webshot2"))
+          odiffr::odiffr_update()
+        shell: Rscript {0}
+
+      - name: Generate screenshots
+        run: Rscript scripts/generate-screenshots.R
+
+      - name: Compare images
+        run: |
+          library(odiffr)
+          results <- compare_dirs_report("baseline/", "current/")
+          if (any(!results$match)) stop("Visual regression detected!")
+        shell: Rscript {0}
+
+      - name: Upload diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diffs
+          path: diffs/
 ```
 
 ### With magick Package
@@ -128,6 +205,31 @@ img2 <- image_read("current.png") |> image_resize("800x600")
 
 result <- compare_images(img1, img2)
 ```
+
+### Visual Regression Testing
+
+```r
+library(testthat)
+library(odiffr)
+
+test_that("dashboard renders correctly", {
+
+  expect_images_match(
+    "screenshots/current.png",
+    "screenshots/baseline.png",
+    threshold = 0.1
+  )
+})
+
+test_that("button changes on hover", {
+  expect_images_differ(
+    "button_normal.png",
+    "button_hover.png"
+  )
+})
+```
+
+On failure, diff images are automatically saved to `tests/testthat/_odiffr/`.
 
 ## Binary Management
 
