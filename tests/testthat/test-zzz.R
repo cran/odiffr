@@ -32,3 +32,16 @@ test_that(".onAttach is silent when odiff is available", {
 
   expect_silent(odiffr:::.onAttach(NULL, "odiffr"))
 })
+
+test_that(".onAttach recommends install_odiff()", {
+  testthat::local_mocked_bindings(
+    odiff_available = function() FALSE,
+    .package = "odiffr"
+  )
+
+  expect_message(
+    odiffr:::.onAttach(NULL, "odiffr"),
+    "odiffr::install_odiff()",
+    fixed = TRUE
+  )
+})

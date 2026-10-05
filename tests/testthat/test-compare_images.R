@@ -11,7 +11,9 @@ test_that("compare_images returns tibble when tibble is installed", {
   expect_true(is.data.frame(result))
   expect_s3_class(result, "tbl_df")
   expect_named(result, c("match", "reason", "diff_count", "diff_percentage",
-                         "diff_output", "img1", "img2"))
+                         "diff_output", "img1", "img2", "error"))
+  expect_true(is.na(result$error))
+  expect_type(result$error, "character")
 })
 
 test_that("compare_images detects matching images", {
@@ -346,7 +348,7 @@ test_that("compare_image_dirs detects differences", {
   expect_equal(result$reason[1], "pixel-diff")
 })
 
-test_that("compare_image_dirs warns and filters missing files in current_dir", {
+test_that("compare_image_dirs warns and reports missing files in current_dir", {
   skip_if_no_odiff()
 
   baseline_dir <- withr::local_tempdir()
@@ -356,7 +358,6 @@ test_that("compare_image_dirs warns and filters missing files in current_dir", {
   on.exit(unlink(img), add = TRUE)
 
   # Baseline has 2 images, current only has 1
-
   file.copy(img, file.path(baseline_dir, "exists.png"))
   file.copy(img, file.path(baseline_dir, "missing.png"))
   file.copy(img, file.path(current_dir, "exists.png"))
@@ -367,9 +368,56 @@ test_that("compare_image_dirs warns and filters missing files in current_dir", {
     "1 file\\(s\\) missing from current_dir"
   )
 
-  # Only the existing pair should be in results
-  expect_equal(nrow(result), 1)
+  # Missing file is reported as a failed row (baseline file order)
+  expect_s3_class(result, "odiffr_batch")
+  expect_equal(nrow(result), 2)
+  expect_equal(result$pair_id, 1:2)
   expect_true(grepl("exists.png", result$img2[1]))
+  expect_true(result$match[1])
+  expect_true(is.na(result$error[1]))
+
+  expect_false(result$match[2])
+  expect_equal(result$reason[2], "missing")
+  expect_identical(result$diff_count[2], NA_integer_)
+  expect_identical(result$diff_percentage[2], NA_real_)
+  expect_identical(result$diff_output[2], NA_character_)
+  expect_true(grepl("missing.png$", result$img1[2]))
+  expect_true(grepl("missing.png$", result$img2[2]))
+  expect_false(file.exists(result$img2[2]))
+  expect_match(result$error[2], "not found in current_dir")
+
+  # A disappearing screenshot must make the summary fail
+  expect_equal(summary(result)$failed, 1)
+})
+
+test_that("compare_image_dirs keeps missing rows in baseline order with diff_dir", {
+  skip_if_no_odiff()
+
+  baseline_dir <- withr::local_tempdir()
+  current_dir <- withr::local_tempdir()
+  diff_dir <- withr::local_tempdir()
+
+  red <- create_test_image(30, 30, "red")
+  blue <- create_test_image(30, 30, "blue")
+  on.exit(unlink(c(red, blue)), add = TRUE)
+
+  file.copy(red, file.path(baseline_dir, "a.png"))
+  file.copy(red, file.path(baseline_dir, "b.png"))
+  file.copy(red, file.path(baseline_dir, "c.png"))
+  file.copy(red, file.path(current_dir, "a.png"))
+  file.copy(blue, file.path(current_dir, "c.png"))
+
+  expect_warning(
+    result <- compare_image_dirs(baseline_dir, current_dir, diff_dir = diff_dir),
+    "missing from current_dir"
+  )
+
+  expect_equal(result$pair_id, 1:3)
+  expect_equal(result$reason, c("match", "missing", "pixel-diff"))
+  expect_true(grepl("c.png$", result$img1[3]))
+  expect_match(result$diff_output[3], "003_c_diff\\.png$")
+  expect_type(result$diff_count, "integer")
+  expect_type(result$error, "character")
 })
 
 test_that("compare_image_dirs errors when no images match pattern", {
@@ -387,7 +435,7 @@ test_that("compare_image_dirs errors when no images match pattern", {
   )
 })
 
-test_that("compare_image_dirs errors when no matching pairs exist", {
+test_that("compare_image_dirs reports all-missing rows instead of erroring", {
   skip_if_no_odiff()
 
   baseline_dir <- withr::local_tempdir()
@@ -396,16 +444,22 @@ test_that("compare_image_dirs errors when no matching pairs exist", {
   img <- create_test_image(30, 30, "red")
   on.exit(unlink(img), add = TRUE)
 
-  # Baseline has an image, current is empty
+  # Baseline has images, current is empty
   file.copy(img, file.path(baseline_dir, "test.png"))
+  file.copy(img, file.path(baseline_dir, "test2.png"))
 
   expect_warning(
-    expect_error(
-      compare_image_dirs(baseline_dir, current_dir),
-      "No matching image pairs found"
-    ),
-    "1 file\\(s\\) missing"
+    result <- compare_image_dirs(baseline_dir, current_dir),
+    "2 file\\(s\\) missing"
   )
+  expect_s3_class(result, "odiffr_batch")
+  expect_equal(nrow(result), 2)
+  expect_equal(result$pair_id, 1:2)
+  expect_equal(result$reason, c("missing", "missing"))
+  expect_false(any(result$match))
+  expect_named(result, c("pair_id", "match", "reason", "diff_count",
+                         "diff_percentage", "diff_output", "img1", "img2",
+                         "error"))
 })
 
 test_that("compare_image_dirs respects custom pattern", {
@@ -851,4 +905,39 @@ test_that("compare_dirs_report passes relative_paths to batch_report", {
     grepl('src="../diffs/', html, fixed = TRUE) ||
     grepl('src="diffs/', html, fixed = TRUE)
   )
+})
+
+test_that("compare_images_batch removes stale diffs from a reused diff_dir", {
+  skip_if_no_odiff()
+
+  dir <- withr::local_tempdir()
+  diff_dir <- file.path(dir, "diffs")
+  base <- file.path(dir, "base.png")
+  cur <- file.path(dir, "cur.png")
+  file.copy(create_test_image(30, 30, "red"), base)
+  file.copy(create_test_image(30, 30, "blue"), cur)
+  pairs <- data.frame(img1 = base, img2 = cur, stringsAsFactors = FALSE)
+
+  first <- compare_images_batch(pairs, diff_dir = diff_dir)
+  expect_false(first$match)
+  stale <- first$diff_output
+  expect_true(file.exists(stale))
+
+  # The images now match: no diff is reported and the old one is gone
+  file.copy(base, cur, overwrite = TRUE)
+  second <- compare_images_batch(pairs, diff_dir = diff_dir)
+  expect_true(second$match)
+  expect_true(is.na(second$diff_output))
+  expect_false(file.exists(stale))
+  expect_length(list.files(diff_dir), 0)
+
+  # Likewise when the comparison fails before odiff runs
+  file.copy(create_test_image(30, 30, "blue"), cur, overwrite = TRUE)
+  compare_images_batch(pairs, diff_dir = diff_dir)
+  expect_true(file.exists(stale))
+  unlink(cur)
+  third <- compare_images_batch(pairs, diff_dir = diff_dir)
+  expect_equal(third$reason, "error")
+  expect_true(is.na(third$diff_output))
+  expect_false(file.exists(stale))
 })

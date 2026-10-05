@@ -1,0 +1,216 @@
+---
+title: "Comparing PDF outputs"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Comparing PDF outputs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Why compare PDFs visually?
+
+Many outputs are delivered as PDF documents: tables, listings and figures
+in clinical reporting, Quarto or R Markdown documents rendered to PDF, or
+reports produced by scheduled jobs. Checking that such outputs did not
+change is often done by eye, which is slow and easy to get wrong when there
+are hundreds of pages.
+
+Comparing the underlying data catches many problems, but not all of them:
+a changed font, a shifted legend, a different default theme after a
+package upgrade, or a truncated table only show up in the rendered output.
+
+`compare_pdfs()` renders each page of two PDF files to an image and compares
+them page by page with odiff. You get a result per page, with odiff's
+tolerance (`threshold`) and antialiasing handling, optional diff images
+highlighting the changed pixels, and the same summaries and reports as for
+image comparisons.
+
+Typical uses:
+
+- **Production versus QC outputs**: compare the figure produced by the
+  production program with the one produced by an independent QC program.
+- **Re-running outputs after an upgrade**: re-run all outputs after
+  upgrading R or packages and compare them with the outputs from before the
+  upgrade.
+- **Rendered documents**: compare a Quarto or R Markdown document rendered
+  to PDF before and after a change.
+
+PDF rendering uses the [pdftools](https://docs.ropensci.org/pdftools/)
+package, which needs to be installed:
+
+```{r}
+install.packages("pdftools")
+```
+
+## Comparing two PDF files
+
+```{r}
+library(odiffr)
+
+res <- compare_pdfs(
+  baseline = "outputs-before/f_km_os.pdf",
+  current  = "outputs-after/f_km_os.pdf",
+  diff_dir = "pdf-diffs"
+)
+res
+```
+
+The result is an `odiffr_batch` with one row per page and a `page` column.
+`img1` and `img2` are the rendered page images; `diff_output` holds the diff
+image for pages that differ. When `diff_dir` is given, the rendered pages are
+kept in `pdf-diffs/pages/`; otherwise they are written to the session's
+temporary directory and removed when the R session ends.
+
+Use the usual tools to inspect the results:
+
+```{r}
+summary(res)
+
+# Which pages differ?
+failed_pairs(res)[, c("page", "reason", "diff_percentage", "diff_output")]
+```
+
+To compare only some pages, use `pages`:
+
+```{r}
+compare_pdfs("before.pdf", "after.pdf", pages = c(1, 5))
+```
+
+### Different numbers of pages
+
+If the two files have a different number of pages, `compare_pdfs()` emits a
+message and reports the pages present in only one file as failures, using
+the existing reasons so that all reports work unchanged:
+
+- a page in `baseline` but not in `current` has `reason = "missing"`;
+- a page in `current` but not in `baseline` has `reason = "error"`, with the
+  error `"Page N not present in baseline PDF"`.
+
+### Different page sizes
+
+Pages of different sizes (for example portrait versus landscape) are
+compared as images of different dimensions and reported as different. Pass
+`fail_on_layout = TRUE` to report them with `reason = "layout-diff"`
+instead:
+
+```{r}
+compare_pdfs("before.pdf", "after.pdf", fail_on_layout = TRUE)
+```
+
+## Comparing whole directories
+
+`compare_pdf_dirs()` compares every PDF file in a baseline directory with the
+file of the same name in a current directory and returns one combined
+result with a `file` column. This fits the "re-run all outputs after an
+upgrade" workflow:
+
+```{r}
+res <- compare_pdf_dirs(
+  "outputs-r4.3/",
+  "outputs-r4.4/",
+  recursive = TRUE,
+  diff_dir = "pdf-diffs"
+)
+
+summary(res)
+
+# Files with at least one differing page
+unique(res$file[!res$match])
+```
+
+A file missing from the current directory is reported as a single
+`"missing"` row, and a file that cannot be read (for example a corrupt
+file) as a single `"error"` row, so one bad file does not stop the whole
+comparison.
+
+## Reports and CI
+
+The results can be passed to the reporting functions. An HTML report gives
+reviewers a quick overview of which pages changed:
+
+```{r}
+batch_report(
+  res,
+  output_file = "pdf-diffs/report.html",
+  images = "all",
+  show_all = TRUE
+)
+```
+
+For continuous integration, write a JUnit XML file so that each page shows
+up as a test case:
+
+```{r}
+batch_junit(res, "pdf-diffs/junit.xml")
+```
+
+## Ignoring dynamic content
+
+Outputs often contain content that changes on every run, such as a
+run-date footer, a program path or a page header with a time stamp. Exclude
+such areas with `ignore_regions`. Coordinates are in **pixels of the
+rendered page**, so they depend on `dpi`: a position of `x` inches from the
+left edge is at pixel `x * dpi`.
+
+For a US Letter page in portrait orientation (8.5 x 11 inches) rendered at
+150 dpi, the page is 1275 x 1650 pixels. To ignore the bottom half inch
+(the footer):
+
+```{r}
+dpi <- 150
+footer <- ignore_region(
+  x1 = 0,
+  y1 = (11 - 0.5) * dpi,
+  x2 = 8.5 * dpi,
+  y2 = 11 * dpi
+)
+
+compare_pdfs("before.pdf", "after.pdf", dpi = dpi, ignore_regions = footer)
+```
+
+The same regions are applied to every page. If you need to find the right
+coordinates, open one of the rendered pages (in `img1`) in an image viewer
+that shows pixel positions.
+
+## Choosing the resolution
+
+`dpi` controls how finely pages are rendered:
+
+- **72-100 dpi** is fast and catches layout changes, missing elements and
+  changed colours.
+- **150 dpi** (the default) is a good compromise for tables and figures.
+- **300 dpi** detects small changes such as a single changed digit in a
+  small font, at the cost of more time and disk space.
+
+Rendering is deterministic for a given file and poppler version, so
+identical PDFs give identical images. If you see small differences caused
+by antialiasing of text or lines, try `antialiasing = TRUE` or a slightly
+higher `threshold`.
+
+## RTF and DOCX outputs
+
+Only PDF files are supported. Outputs in other formats such as RTF or DOCX
+need to be converted to PDF first, for example with LibreOffice:
+
+```bash
+soffice --headless --convert-to pdf --outdir outputs-pdf outputs/*.rtf
+```
+
+Use the same converter (and version) for the baseline and the current
+outputs, so that differences come from the outputs and not from the
+conversion.
+
+## Limitations
+
+A visual comparison shows *whether* the rendered pages differ, and where.
+It does not replace checking the content of the outputs, and it does not by
+itself make a process compliant with any regulation: it is a tool to make
+reviews faster and more systematic.

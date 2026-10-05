@@ -9,7 +9,8 @@ odiffr_update(version = "latest", force = FALSE)
 \arguments{
 \item{version}{Character string specifying the version to download.
 Use \code{"latest"} (default) to download the most recent release, or
-specify a version tag like \code{"v4.1.2"}.}
+specify a version like \code{"v4.1.2"} or \code{"4.1.2"} (the \code{v} prefix is
+optional).}
 
 \item{force}{Logical; if \code{TRUE}, re-download even if the binary already
 exists in the cache. Default is \code{FALSE}.}
@@ -21,6 +22,22 @@ Character string with the path to the downloaded binary.
 Downloads the odiff binary from GitHub releases to the user's cache
 directory. The downloaded binary will be used by \code{find_odiff()} if no
 system-wide installation or user-specified path is found.
+\code{\link[=install_odiff]{install_odiff()}} is the recommended, user-facing way to do this.
+}
+\details{
+The latest release is looked up via the GitHub API. If the \code{GITHUB_PAT}
+or \code{GITHUB_TOKEN} environment variable is set, it is sent as a bearer
+token to avoid API rate limits.
+
+The binary is downloaded to a temporary file next to its final location
+and only moved into place once the download has succeeded, so an
+interrupted download never leaves a broken binary behind. The download
+timeout (\code{getOption("timeout")}) is temporarily raised to at least 300
+seconds. The downloaded version is recorded in a \code{CACHED_VERSION} file
+next to the binary.
+
+Note that some odiff releases were published without binary assets; if
+the download fails with HTTP 404, try another version.
 }
 \examples{
 \dontrun{

@@ -15,6 +15,7 @@ compare_dirs_report(
   relative_paths = FALSE,
   n_worst = 10,
   show_all = FALSE,
+  images = c("diff", "all"),
   ...
 )
 }
@@ -46,6 +47,10 @@ when \code{embed = TRUE}. Default: \code{FALSE}.}
 
 \item{show_all}{Logical; if \code{TRUE}, show all comparisons in the report,
 not just failures.}
+
+\item{images}{Which images to show in the report: \code{"diff"} (default) for
+the diff image only, or \code{"all"} for baseline, current and diff images
+side by side. See \code{\link[=batch_report]{batch_report()}}.}
 
 \item{...}{Additional arguments passed to \code{\link[=compare_image_dirs]{compare_image_dirs()}} (e.g.
 \code{threshold}, \code{antialiasing}, \code{pattern}, \code{recursive}).}

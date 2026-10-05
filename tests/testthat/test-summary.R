@@ -406,3 +406,95 @@ test_that("failed_pairs preserves tibble class", {
   failed <- failed_pairs(results)
   expect_true(inherits(failed, "tbl_df"))
 })
+
+
+# Hand-built batches (no odiff required) ------------------------------------
+
+mixed_na_batch <- function(...) {
+  make_batch(
+    match = c(FALSE, FALSE, TRUE, FALSE, FALSE),
+    reason = c("layout-diff", "pixel-diff", "match", "missing", "pixel-diff"),
+    diff_count = c(NA, 10L, 0L, NA, 500L),
+    diff_percentage = c(NA, 1.5, 0, NA, 50),
+    ...
+  )
+}
+
+test_that("summary orders worst offenders with NA diff_percentage last", {
+  summ <- summary(mixed_na_batch())
+
+  expect_equal(summ$worst$diff_percentage[1:2], c(50, 1.5))
+  expect_true(all(is.na(summ$worst$diff_percentage[3:4])))
+  # NA rows keep their original order
+  expect_equal(summ$worst$reason[3:4], c("layout-diff", "missing"))
+  expect_equal(summ$reason_counts[["missing"]], 1L)
+})
+
+test_that("print shows '-' instead of NA for rows without pixel stats", {
+  out <- capture.output(print(summary(mixed_na_batch())))
+
+  expect_false(any(grepl("NA", out, fixed = TRUE)))
+  expect_true(any(grepl("img5.png (50.00%, 500 pixels)", out, fixed = TRUE)))
+  expect_true(any(grepl("img1.png (layout-diff)", out, fixed = TRUE)))
+  expect_true(any(grepl("img4.png (missing: no current image)", out, fixed = TRUE)))
+})
+
+test_that("print includes error messages when an error column exists", {
+  batch <- make_batch(
+    match = c(FALSE, FALSE),
+    reason = c("error", "pixel-diff"),
+    diff_count = c(NA, 5L),
+    diff_percentage = c(NA, 2),
+    error = c("odiff crashed", NA)
+  )
+  out <- capture.output(print(summary(batch)))
+
+  expect_true(any(grepl("img1.png (error: odiff crashed)", out, fixed = TRUE)))
+  expect_true(any(grepl("img2.png (2.00%, 5 pixels)", out, fixed = TRUE)))
+  expect_false(any(grepl("NA", out, fixed = TRUE)))
+})
+
+test_that("summary of a tibble batch without error column works", {
+  skip_if_not_installed("tibble")
+  out <- capture.output(print(summary(mixed_na_batch(tibble = TRUE))))
+  expect_true(any(grepl("img1.png (layout-diff)", out, fixed = TRUE)))
+})
+
+test_that("summary of an empty batch has NA pass_rate and prints '-'", {
+  empty <- make_batch()
+  expect_equal(nrow(empty), 0)
+
+  summ <- summary(empty)
+  expect_equal(summ$total, 0)
+  expect_equal(summ$passed, 0)
+  expect_equal(summ$failed, 0)
+  expect_true(is.na(summ$pass_rate))
+  expect_false(is.nan(summ$pass_rate))
+  expect_null(summ$reason_counts)
+  expect_null(summ$diff_stats)
+  expect_null(summ$worst)
+
+  out <- capture.output(print(summ))
+  expect_true(any(grepl("0 pairs", out)))
+  expect_true(any(grepl("Passed: 0 (-)", out, fixed = TRUE)))
+  expect_true(any(grepl("Failed: 0 (-)", out, fixed = TRUE)))
+  expect_false(any(grepl("NaN|NA", out)))
+})
+
+test_that(".fmt_pct and .fmt_count handle NA", {
+  expect_equal(odiffr:::.fmt_pct(c(1.234, NA, NaN)), c("1.23%", "-", "-"))
+  expect_equal(odiffr:::.fmt_pct(50, 1), "50.0%")
+  expect_equal(odiffr:::.fmt_count(c(100000, NA)), c("100000", "-"))
+})
+
+test_that(".row_label() prefers the snapshot column", {
+  row <- data.frame(pair_id = 1L, img1 = "_snaps/linux/plots/var.png",
+                    img2 = "_snaps/linux/plots/var.new.png",
+                    snapshot = "linux/plots/var.png",
+                    stringsAsFactors = FALSE)
+  expect_equal(odiffr:::.row_label(row), "linux/plots/var.png")
+  row$snapshot <- NA_character_
+  expect_equal(odiffr:::.row_label(row), "var.new.png")
+  row$snapshot <- NULL
+  expect_equal(odiffr:::.row_label(row), "var.new.png")
+})

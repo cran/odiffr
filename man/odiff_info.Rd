@@ -14,6 +14,9 @@ A list with components:
 \item{path}{Path to the odiff binary}
 \item{version}{odiff version string}
 \item{source}{Source of the binary (option, system, cached)}
+\item{shim}{Path of the npm launcher script found on the PATH that
+\code{path} was resolved from, or \code{NA} if the binary is used directly.
+See \code{\link[=find_odiff]{find_odiff()}}.}
 }
 }
 \description{

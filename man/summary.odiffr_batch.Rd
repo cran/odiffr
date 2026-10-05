@@ -26,13 +26,16 @@ An \code{odiffr_batch_summary} object with the following components:
 \item{total}{Total number of comparisons.}
 \item{passed}{Number of matching image pairs.}
 \item{failed}{Number of non-matching image pairs.}
-\item{pass_rate}{Proportion of passing comparisons (0 to 1).}
+\item{pass_rate}{Proportion of passing comparisons (0 to 1), or \code{NA}
+for an empty batch (zero comparisons).}
 \item{reason_counts}{Table of failure reasons (NULL if no failures).}
 \item{diff_stats}{List with min, median, mean, max diff percentages
 (NULL if no failures with diff data).
 }
-\item{worst}{Data frame of worst offenders by diff percentage
-(NULL if no failures).
+\item{worst}{Data frame of worst offenders, ordered by diff percentage
+(descending). Failures without a diff percentage (e.g. layout
+differences, errors, or missing files) are listed after those with
+one. NULL if no failures.
 }
 }
 }

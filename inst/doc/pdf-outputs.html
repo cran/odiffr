@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Comparing PDF outputs</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Comparing PDF outputs</h1>
+
+
+
+<div id="why-compare-pdfs-visually" class="section level2">
+<h2>Why compare PDFs visually?</h2>
+<p>Many outputs are delivered as PDF documents: tables, listings and
+figures in clinical reporting, Quarto or R Markdown documents rendered
+to PDF, or reports produced by scheduled jobs. Checking that such
+outputs did not change is often done by eye, which is slow and easy to
+get wrong when there are hundreds of pages.</p>
+<p>Comparing the underlying data catches many problems, but not all of
+them: a changed font, a shifted legend, a different default theme after
+a package upgrade, or a truncated table only show up in the rendered
+output.</p>
+<p><code>compare_pdfs()</code> renders each page of two PDF files to an
+image and compares them page by page with odiff. You get a result per
+page, with odiff’s tolerance (<code>threshold</code>) and antialiasing
+handling, optional diff images highlighting the changed pixels, and the
+same summaries and reports as for image comparisons.</p>
+<p>Typical uses:</p>
+<ul>
+<li><strong>Production versus QC outputs</strong>: compare the figure
+produced by the production program with the one produced by an
+independent QC program.</li>
+<li><strong>Re-running outputs after an upgrade</strong>: re-run all
+outputs after upgrading R or packages and compare them with the outputs
+from before the upgrade.</li>
+<li><strong>Rendered documents</strong>: compare a Quarto or R Markdown
+document rendered to PDF before and after a change.</li>
+</ul>
+<p>PDF rendering uses the <a href="https://docs.ropensci.org/pdftools/">pdftools</a> package, which
+needs to be installed:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;pdftools&quot;</span>)</span></code></pre></div>
+</div>
+<div id="comparing-two-pdf-files" class="section level2">
+<h2>Comparing two PDF files</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(odiffr)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">compare_pdfs</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">baseline =</span> <span class="st">&quot;outputs-before/f_km_os.pdf&quot;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">current  =</span> <span class="st">&quot;outputs-after/f_km_os.pdf&quot;</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">diff_dir =</span> <span class="st">&quot;pdf-diffs&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>res</span></code></pre></div>
+<p>The result is an <code>odiffr_batch</code> with one row per page and
+a <code>page</code> column. <code>img1</code> and <code>img2</code> are
+the rendered page images; <code>diff_output</code> holds the diff image
+for pages that differ. When <code>diff_dir</code> is given, the rendered
+pages are kept in <code>pdf-diffs/pages/</code>; otherwise they are
+written to the session’s temporary directory and removed when the R
+session ends.</p>
+<p>Use the usual tools to inspect the results:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">summary</span>(res)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co"># Which pages differ?</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">failed_pairs</span>(res)[, <span class="fu">c</span>(<span class="st">&quot;page&quot;</span>, <span class="st">&quot;reason&quot;</span>, <span class="st">&quot;diff_percentage&quot;</span>, <span class="st">&quot;diff_output&quot;</span>)]</span></code></pre></div>
+<p>To compare only some pages, use <code>pages</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">compare_pdfs</span>(<span class="st">&quot;before.pdf&quot;</span>, <span class="st">&quot;after.pdf&quot;</span>, <span class="at">pages =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))</span></code></pre></div>
+<div id="different-numbers-of-pages" class="section level3">
+<h3>Different numbers of pages</h3>
+<p>If the two files have a different number of pages,
+<code>compare_pdfs()</code> emits a message and reports the pages
+present in only one file as failures, using the existing reasons so that
+all reports work unchanged:</p>
+<ul>
+<li>a page in <code>baseline</code> but not in <code>current</code> has
+<code>reason = &quot;missing&quot;</code>;</li>
+<li>a page in <code>current</code> but not in <code>baseline</code> has
+<code>reason = &quot;error&quot;</code>, with the error
+<code>&quot;Page N not present in baseline PDF&quot;</code>.</li>
+</ul>
+</div>
+<div id="different-page-sizes" class="section level3">
+<h3>Different page sizes</h3>
+<p>Pages of different sizes (for example portrait versus landscape) are
+compared as images of different dimensions and reported as different.
+Pass <code>fail_on_layout = TRUE</code> to report them with
+<code>reason = &quot;layout-diff&quot;</code> instead:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">compare_pdfs</span>(<span class="st">&quot;before.pdf&quot;</span>, <span class="st">&quot;after.pdf&quot;</span>, <span class="at">fail_on_layout =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="comparing-whole-directories" class="section level2">
+<h2>Comparing whole directories</h2>
+<p><code>compare_pdf_dirs()</code> compares every PDF file in a baseline
+directory with the file of the same name in a current directory and
+returns one combined result with a <code>file</code> column. This fits
+the “re-run all outputs after an upgrade” workflow:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">compare_pdf_dirs</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;outputs-r4.3/&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="st">&quot;outputs-r4.4/&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">recursive =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">diff_dir =</span> <span class="st">&quot;pdf-diffs&quot;</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="fu">summary</span>(res)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co"># Files with at least one differing page</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="fu">unique</span>(res<span class="sc">$</span>file[<span class="sc">!</span>res<span class="sc">$</span>match])</span></code></pre></div>
+<p>A file missing from the current directory is reported as a single
+<code>&quot;missing&quot;</code> row, and a file that cannot be read (for example
+a corrupt file) as a single <code>&quot;error&quot;</code> row, so one bad file
+does not stop the whole comparison.</p>
+</div>
+<div id="reports-and-ci" class="section level2">
+<h2>Reports and CI</h2>
+<p>The results can be passed to the reporting functions. An HTML report
+gives reviewers a quick overview of which pages changed:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">batch_report</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  res,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;pdf-diffs/report.html&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">images =</span> <span class="st">&quot;all&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">show_all =</span> <span class="cn">TRUE</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>For continuous integration, write a JUnit XML file so that each page
+shows up as a test case:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">batch_junit</span>(res, <span class="st">&quot;pdf-diffs/junit.xml&quot;</span>)</span></code></pre></div>
+</div>
+<div id="ignoring-dynamic-content" class="section level2">
+<h2>Ignoring dynamic content</h2>
+<p>Outputs often contain content that changes on every run, such as a
+run-date footer, a program path or a page header with a time stamp.
+Exclude such areas with <code>ignore_regions</code>. Coordinates are in
+<strong>pixels of the rendered page</strong>, so they depend on
+<code>dpi</code>: a position of <code>x</code> inches from the left edge
+is at pixel <code>x * dpi</code>.</p>
+<p>For a US Letter page in portrait orientation (8.5 x 11 inches)
+rendered at 150 dpi, the page is 1275 x 1650 pixels. To ignore the
+bottom half inch (the footer):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>dpi <span class="ot">&lt;-</span> <span class="dv">150</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>footer <span class="ot">&lt;-</span> <span class="fu">ignore_region</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">x1 =</span> <span class="dv">0</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">y1 =</span> (<span class="dv">11</span> <span class="sc">-</span> <span class="fl">0.5</span>) <span class="sc">*</span> dpi,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">x2 =</span> <span class="fl">8.5</span> <span class="sc">*</span> dpi,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">y2 =</span> <span class="dv">11</span> <span class="sc">*</span> dpi</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="fu">compare_pdfs</span>(<span class="st">&quot;before.pdf&quot;</span>, <span class="st">&quot;after.pdf&quot;</span>, <span class="at">dpi =</span> dpi, <span class="at">ignore_regions =</span> footer)</span></code></pre></div>
+<p>The same regions are applied to every page. If you need to find the
+right coordinates, open one of the rendered pages (in <code>img1</code>)
+in an image viewer that shows pixel positions.</p>
+</div>
+<div id="choosing-the-resolution" class="section level2">
+<h2>Choosing the resolution</h2>
+<p><code>dpi</code> controls how finely pages are rendered:</p>
+<ul>
+<li><strong>72-100 dpi</strong> is fast and catches layout changes,
+missing elements and changed colours.</li>
+<li><strong>150 dpi</strong> (the default) is a good compromise for
+tables and figures.</li>
+<li><strong>300 dpi</strong> detects small changes such as a single
+changed digit in a small font, at the cost of more time and disk
+space.</li>
+</ul>
+<p>Rendering is deterministic for a given file and poppler version, so
+identical PDFs give identical images. If you see small differences
+caused by antialiasing of text or lines, try
+<code>antialiasing = TRUE</code> or a slightly higher
+<code>threshold</code>.</p>
+</div>
+<div id="rtf-and-docx-outputs" class="section level2">
+<h2>RTF and DOCX outputs</h2>
+<p>Only PDF files are supported. Outputs in other formats such as RTF or
+DOCX need to be converted to PDF first, for example with
+LibreOffice:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">soffice</span> <span class="at">--headless</span> <span class="at">--convert-to</span> pdf <span class="at">--outdir</span> outputs-pdf outputs/<span class="pp">*</span>.rtf</span></code></pre></div>
+<p>Use the same converter (and version) for the baseline and the current
+outputs, so that differences come from the outputs and not from the
+conversion.</p>
+</div>
+<div id="limitations" class="section level2">
+<h2>Limitations</h2>
+<p>A visual comparison shows <em>whether</em> the rendered pages differ,
+and where. It does not replace checking the content of the outputs, and
+it does not by itself make a process compliant with any regulation: it
+is a tool to make reviews faster and more systematic.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

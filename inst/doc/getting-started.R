@@ -6,11 +6,14 @@ knitr::opts_chunk$set(
 )
 
 ## ----eval=FALSE---------------------------------------------------------------
-# # From CRAN (when available)
+# # From CRAN
 # install.packages("odiffr")
 # 
 # # Development version
 # pak::pak("BenWolst/odiffr")
+
+## ----eval=FALSE---------------------------------------------------------------
+# odiffr::install_odiff()
 
 ## ----setup--------------------------------------------------------------------
 library(odiffr)
@@ -45,7 +48,7 @@ odiff_info()
 # # Very strict comparison
 # result <- compare_images("img1.png", "img2.png", threshold = 0.01)
 # 
-# # More lenient (ignore minor color variations)
+# # More lenient (ignore minor colour variations)
 # result <- compare_images("img1.png", "img2.png", threshold = 0.2)
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -143,7 +146,8 @@ odiff_info()
 #   output_file = "report.html",
 #   title = "Dashboard Visual Regression",
 #   n_worst = 20,        # Show top 20 failures
-#   show_all = TRUE      # Include all comparisons, not just failures
+#   show_all = TRUE,     # Include all comparisons, not just failures
+#   images = "all"       # Baseline, current and diff side by side
 # )
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -164,6 +168,36 @@ odiff_info()
 # compare_dirs_report("baseline/", "current/", parallel = TRUE, embed = TRUE)
 
 ## ----eval=FALSE---------------------------------------------------------------
+# results <- compare_image_dirs("baseline/", "current/", diff_dir = "diffs/")
+# 
+# # Review the differences first
+# batch_report(results, "diffs/report.html")
+# 
+# # Preview what would change, then copy current images over the baselines
+# approve_changes(results, dry_run = TRUE)
+# approve_changes(results)
+# 
+# # Approve selected images only, keeping a backup of the old baselines
+# approve_changes(results, which = "home.png", backup_dir = "baseline-backup/")
+# 
+# # Also delete baselines whose screenshot was intentionally removed
+# approve_changes(results, reasons = "missing", remove_missing = TRUE)
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Baseline, current and diff image side by side (base graphics)
+# result <- odiff_run("baseline.png", "current.png", diff_output = "diff.png")
+# plot(result)
+# plot(result, which = "diff")
+# 
+# # Get the diff image of a compare_images() result or a batch row
+# img <- diff_image(compare_images("baseline.png", "current.png",
+#                                  diff_output = TRUE))  # magick-image
+# plot(diff_image(failed_pairs(results)[1, ], as = "raster"))  # no magick
+
+## ----eval=FALSE---------------------------------------------------------------
+# use_odiffr_ci()
+
+## ----eval=FALSE---------------------------------------------------------------
 # # In your CI script
 # results <- compare_dirs_report("baseline/", "current/")
 # 
@@ -171,6 +205,13 @@ odiff_info()
 # if (any(!results$match)) {
 #   stop("Visual regression detected! See diffs/ for details.")
 # }
+
+## ----eval=FALSE---------------------------------------------------------------
+# results <- compare_image_dirs("baseline/", "current/", diff_dir = "diffs/")
+# 
+# batch_markdown(results)                    # GitHub job summary
+# batch_junit(results, "odiffr-junit.xml")   # JUnit XML
+# batch_report(results, "diffs/report.html", images = "all", embed = TRUE)
 
 ## ----eval=FALSE---------------------------------------------------------------
 # library(magick)
@@ -200,6 +241,7 @@ odiff_info()
 #   diff_color = "#FF00FF",
 #   diff_lines = TRUE,
 #   reduce_ram = FALSE,
+#   enable_asm = TRUE,
 #   ignore_regions = list(ignore_region(10, 10, 100, 50)),
 #   timeout = 60
 # )
@@ -215,13 +257,21 @@ odiff_info()
 
 ## ----eval=FALSE---------------------------------------------------------------
 # # Latest version
-# odiffr_update()
+# install_odiff()
 # 
-# # Specific version
-# odiffr_update(version = "v4.1.2")
+# # Specific version, replacing the cached binary
+# install_odiff(version = "v4.1.2", force = TRUE)
 
 ## ----eval=FALSE---------------------------------------------------------------
 # options(odiffr.path = "/validated/bin/odiff-4.1.2")
+
+## ----eval=FALSE---------------------------------------------------------------
+# info <- odiff_info()
+# info$path  # the native binary
+# info$shim  # the npm launcher it was resolved from (NA if none)
+# 
+# # Opt out and use the PATH entry as-is
+# options(odiffr.resolve_npm = FALSE)
 
 ## -----------------------------------------------------------------------------
 # View cache location
@@ -261,6 +311,39 @@ odiffr_cache_path()
 # })
 
 ## ----eval=FALSE---------------------------------------------------------------
+# library(ggplot2)
+# 
+# test_that("scatter plot matches baseline", {
+#   p <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
+# 
+#   expect_images_match(
+#     p,
+#     test_path("baselines/scatter.png"),
+#     plot_options = plot_options(width = 6, height = 4, res = 96)
+#   )
+# })
+# 
+# # compare_images() accepts plots too; they are labelled "<plot>"
+# compare_images("baseline_hist.png", function() hist(mtcars$mpg))
+
+## ----eval=FALSE---------------------------------------------------------------
+# test_that("plots are stable", {
+#   p <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
+#   expect_snapshot_image(p)  # snapshot name: "p.png"
+# 
+#   expect_snapshot_image(
+#     function() hist(mtcars$mpg),
+#     name = "mpg-hist",          # required for inline expressions
+#     antialiasing = TRUE,
+#     variant = Sys.info()[["sysname"]]  # separate snapshots per OS
+#   )
+# })
+
+## ----eval=FALSE---------------------------------------------------------------
+# testthat::snapshot_review()
+# testthat::snapshot_accept()
+
+## ----eval=FALSE---------------------------------------------------------------
 # # Disable diff image saving
 # options(odiffr.save_diff = FALSE)
 # 
@@ -274,4 +357,20 @@ odiffr_cache_path()
 # # Document version for validation
 # info <- odiff_info()
 # sprintf("Using odiff %s from %s", info$version, info$source)
+
+## ----eval=FALSE---------------------------------------------------------------
+# # odiff_run() results carry their parameters
+# result <- odiff_run("baseline.png", "current.png", "diff.png",
+#                     threshold = 0.05)
+# rec <- audit_record(result)
+# rec$header$odiff_version
+# rec$comparisons[, c("img1_hash", "img2_hash", "match")]
+# 
+# # Write a JSON evidence file (requires jsonlite)
+# audit_record(result, file = "validation/comparison-audit.json")
+# 
+# # Batch results: pass the parameters you used; CSV has one row per pair
+# results <- compare_image_dirs("baseline/", "current/", threshold = 0.05)
+# audit_record(results, file = "validation/audit.csv", format = "csv",
+#              params = list(threshold = 0.05))
 

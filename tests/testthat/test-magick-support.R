@@ -170,3 +170,21 @@ test_that(".write_temp_image errors when magick is not available", {
     "magick.*package is required"
   )
 })
+
+test_that("compare_images() rejects multi-frame magick images", {
+  skip_if_not_installed("magick")
+  skip_if_no_odiff()
+
+  img_path <- create_test_image(10, 10, "red")
+  on.exit(unlink(img_path), add = TRUE)
+  one <- magick::image_read(img_path)
+  two <- c(one, one)
+  expect_length(two, 2)
+
+  expect_error(compare_images(two, img_path),
+               "must contain a single frame \\(this one has 2\\)")
+  expect_error(compare_images(img_path, two), "single frame")
+  expect_error(odiffr:::.write_temp_image(two), "img\\[1\\]")
+  # A single frame still works
+  expect_true(compare_images(two[1], img_path)$match)
+})

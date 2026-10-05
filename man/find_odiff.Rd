@@ -14,11 +14,47 @@ Locates the odiff executable using a priority-based search:
 \enumerate{
 \item User-specified path via \code{options(odiffr.path = "...")}
 \item System PATH (\code{Sys.which("odiff")})
-\item Cached binary from \code{odiffr_update()}
+\item Cached binary from \code{\link[=install_odiff]{install_odiff()}} (or \code{odiffr_update()})
 }
+}
+\details{
+\strong{Installing odiff.} If odiff cannot be found and the R session is
+interactive, \code{find_odiff()} (and so \code{\link[=compare_images]{compare_images()}}, \code{\link[=odiff_run]{odiff_run()}} and
+the other functions that need the binary) offers once per session to
+download the latest odiff release to the user cache with
+\code{\link[=install_odiff]{install_odiff()}}. Nothing is ever downloaded without asking: the offer is
+never made in non-interactive sessions, while running tests with testthat,
+while knitting, or during \verb{R CMD check}. Set
+\code{options(odiffr.ask_install = FALSE)} to turn the offer off. If the offer
+is declined, \code{find_odiff()} signals an error explaining how to install
+odiff. \code{\link[=odiff_available]{odiff_available()}} never makes the offer.
+
+\strong{npm installs.} Since odiff 4.4, \verb{npm install -g odiff-bin} puts a
+small Node.js launcher script on the PATH, which starts Node and then
+spawns the native binary shipped in an \verb{@odiff/<platform>-<arch>}
+package. Starting Node adds tens of milliseconds to every comparison, so
+when the odiff found on the PATH is such a launcher (a \verb{#!} script that
+runs \code{node}, or an npm \code{.cmd}/\code{.ps1} wrapper on Windows), \code{find_odiff()}
+looks for the native binary inside the npm installation and returns it
+instead. For older \code{odiff-bin} releases, the native \code{bin/odiff.exe} inside
+the package is used. If no native binary can be found, the launcher itself
+is returned, so a working setup is never broken. The lookup is cached per
+launcher path and redone when the launcher file changes.
+
+Set \code{options(odiffr.resolve_npm = FALSE)} to disable this and always use
+the PATH entry as-is. A path given via \code{options(odiffr.path = ...)} is
+always used exactly as specified and is never resolved.
 }
 \examples{
 \dontrun{
 find_odiff()
+
+# Use the npm launcher on the PATH as-is
+options(odiffr.resolve_npm = FALSE)
+find_odiff()
 }
+}
+\seealso{
+\code{\link[=odiff_info]{odiff_info()}} to see which binary is used and whether it was
+resolved from an npm launcher.
 }

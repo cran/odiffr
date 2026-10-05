@@ -48,9 +48,8 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
-html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -351,121 +350,130 @@ pixel-by-pixel image comparison tool. It’s designed for:</p>
 <li>Automated image analysis workflows</li>
 </ul>
 </div>
-<div id="system-requirements" class="section level2">
-<h2>System Requirements</h2>
-<p>Odiffr requires the Odiff binary to be installed on your system:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># npm (cross-platform, recommended)</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> odiff-bin</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Or download binaries from GitHub releases</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># https://github.com/dmtrKovalenko/odiff/releases</span></span></code></pre></div>
-<p>If you cannot install Odiff system-wide, use
-<code>odiffr_update()</code> after installing the package to download a
-binary to your user cache.</p>
-</div>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># From CRAN (when available)</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;odiffr&quot;</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># Development version</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">&quot;BenWolst/odiffr&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># From CRAN</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;odiffr&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Development version</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">&quot;BenWolst/odiffr&quot;</span>)</span></code></pre></div>
+</div>
+<div id="system-requirements" class="section level2">
+<h2>System Requirements</h2>
+<p>Odiffr requires the Odiff binary (&gt;= 4.1.1). The easiest way to
+install it is from R: <code>install_odiff()</code> downloads the binary
+for your platform from the Odiff GitHub releases to your user cache,
+with no need for Node.js or administrator rights:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>odiffr<span class="sc">::</span><span class="fu">install_odiff</span>()</span></code></pre></div>
+<p>In interactive sessions, odiffr also offers to do this the first time
+Odiff is needed (for example, by <code>compare_images()</code>). It
+never prompts or downloads anything in non-interactive sessions, tests,
+R Markdown documents or <code>R CMD check</code>; set
+<code>options(odiffr.ask_install = FALSE)</code> to turn the offer
+off.</p>
+<p>Alternatively, install Odiff system-wide:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># npm (cross-platform)</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> odiff-bin</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co"># Or download binaries from GitHub releases</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co"># https://github.com/dmtrKovalenko/odiff/releases</span></span></code></pre></div>
 </div>
 <div id="basic-usage" class="section level2">
 <h2>Basic Usage</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(odiffr)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">library</span>(odiffr)</span></code></pre></div>
 <div id="check-configuration" class="section level3">
 <h3>Check Configuration</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Verify Odiff is available</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">odiff_available</span>()</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># View configuration details</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="fu">odiff_info</span>()</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; odiffr configuration</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; --------------------</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; OS:       darwin </span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; Arch:     arm64 </span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; Path:     /opt/homebrew/lib/node_modules/odiff-bin/raw_binaries/odiff-macos-arm64 </span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; Version:  4.2.1 </span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Source:   system</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Verify Odiff is available</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">odiff_available</span>()</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># View configuration details</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="fu">odiff_info</span>()</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; odiffr configuration</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; --------------------</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; OS:       linux </span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; Arch:     x64 </span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; Path:     /opt/node22/lib/node_modules/odiff-bin/node_modules/@odiff/linux-x64/odiff </span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; Version:  4.5.0 </span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; Source:   system </span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; Via npm:  /opt/node22/lib/node_modules/odiff-bin/bin/odiff</span></span></code></pre></div>
 </div>
 <div id="compare-images" class="section level3">
 <h3>Compare Images</h3>
 <p>The main function is <code>compare_images()</code>, which returns a
 tibble (or data.frame):</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>result</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 7</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;   match reason     diff_count diff_percentage diff_output img1         img2</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;   &lt;lgl&gt; &lt;chr&gt;           &lt;int&gt;           &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt;</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 1 FALSE pixel-diff       1234            2.45 NA          baseline.png current.png</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>result</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 7</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;   match reason     diff_count diff_percentage diff_output img1         img2</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;   &lt;lgl&gt; &lt;chr&gt;           &lt;int&gt;           &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 1 FALSE pixel-diff       1234            2.45 NA          baseline.png current.png</span></span></code></pre></div>
 </div>
 <div id="generate-diff-images" class="section level3">
 <h3>Generate Diff Images</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Specify output path</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>,</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>                         <span class="at">diff_output =</span> <span class="st">&quot;diff.png&quot;</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># Or use TRUE for auto-generated temp file</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>,</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>                         <span class="at">diff_output =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>result<span class="sc">$</span>diff_output</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;/tmp/RtmpXXXXXX/file12345.png&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Specify output path</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                         <span class="at">diff_output =</span> <span class="st">&quot;diff.png&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co"># Or use TRUE for auto-generated temp file</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>                         <span class="at">diff_output =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>result<span class="sc">$</span>diff_output</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;/tmp/RtmpXXXXXX/file12345.png&quot;</span></span></code></pre></div>
 </div>
 </div>
 <div id="advanced-options" class="section level2">
 <h2>Advanced Options</h2>
 <div id="threshold" class="section level3">
 <h3>Threshold</h3>
-<p>The threshold parameter (0-1) controls color sensitivity. Lower
+<p>The threshold parameter (0-1) controls colour sensitivity. Lower
 values are more precise:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Very strict comparison</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>, <span class="at">threshold =</span> <span class="fl">0.01</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># More lenient (ignore minor color variations)</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>, <span class="at">threshold =</span> <span class="fl">0.2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Very strict comparison</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>, <span class="at">threshold =</span> <span class="fl">0.01</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># More lenient (ignore minor colour variations)</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>, <span class="at">threshold =</span> <span class="fl">0.2</span>)</span></code></pre></div>
 </div>
 <div id="antialiasing" class="section level3">
 <h3>Antialiasing</h3>
 <p>Ignore antialiased pixels that often differ between renders:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>, <span class="at">antialiasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>, <span class="at">antialiasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </div>
 <div id="ignore-regions" class="section level3">
 <h3>Ignore Regions</h3>
 <p>Exclude specific areas from comparison (useful for timestamps,
 dynamic content):</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>,</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">ignore_regions =</span> <span class="fu">list</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>    <span class="fu">ignore_region</span>(<span class="at">x1 =</span> <span class="dv">0</span>, <span class="at">y1 =</span> <span class="dv">0</span>, <span class="at">x2 =</span> <span class="dv">200</span>, <span class="at">y2 =</span> <span class="dv">50</span>),    <span class="co"># Header</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>    <span class="fu">ignore_region</span>(<span class="at">x1 =</span> <span class="dv">0</span>, <span class="at">y1 =</span> <span class="dv">900</span>, <span class="at">x2 =</span> <span class="dv">1920</span>, <span class="at">y2 =</span> <span class="dv">1080</span>) <span class="co"># Footer</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  )</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(<span class="st">&quot;img1.png&quot;</span>, <span class="st">&quot;img2.png&quot;</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">ignore_regions =</span> <span class="fu">list</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    <span class="fu">ignore_region</span>(<span class="at">x1 =</span> <span class="dv">0</span>, <span class="at">y1 =</span> <span class="dv">0</span>, <span class="at">x2 =</span> <span class="dv">200</span>, <span class="at">y2 =</span> <span class="dv">50</span>),    <span class="co"># Header</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="fu">ignore_region</span>(<span class="at">x1 =</span> <span class="dv">0</span>, <span class="at">y1 =</span> <span class="dv">900</span>, <span class="at">x2 =</span> <span class="dv">1920</span>, <span class="at">y2 =</span> <span class="dv">1080</span>) <span class="co"># Footer</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  )</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 </div>
 <div id="batch-processing" class="section level2">
 <h2>Batch Processing</h2>
 <p>Compare multiple image pairs efficiently:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>pairs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">img1 =</span> <span class="fu">c</span>(<span class="st">&quot;baseline/page1.png&quot;</span>, <span class="st">&quot;baseline/page2.png&quot;</span>, <span class="st">&quot;baseline/page3.png&quot;</span>),</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">img2 =</span> <span class="fu">c</span>(<span class="st">&quot;current/page1.png&quot;</span>, <span class="st">&quot;current/page2.png&quot;</span>, <span class="st">&quot;current/page3.png&quot;</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>)</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_images_batch</span>(pairs, <span class="at">diff_dir =</span> <span class="st">&quot;diffs/&quot;</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co"># View failures</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>results[<span class="sc">!</span>results<span class="sc">$</span>match, ]</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>pairs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">img1 =</span> <span class="fu">c</span>(<span class="st">&quot;baseline/page1.png&quot;</span>, <span class="st">&quot;baseline/page2.png&quot;</span>, <span class="st">&quot;baseline/page3.png&quot;</span>),</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">img2 =</span> <span class="fu">c</span>(<span class="st">&quot;current/page1.png&quot;</span>, <span class="st">&quot;current/page2.png&quot;</span>, <span class="st">&quot;current/page3.png&quot;</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_images_batch</span>(pairs, <span class="at">diff_dir =</span> <span class="st">&quot;diffs/&quot;</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co"># View failures</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>results[<span class="sc">!</span>results<span class="sc">$</span>match, ]</span></code></pre></div>
 <div id="directory-comparison" class="section level3">
 <h3>Directory Comparison</h3>
 <p>Compare all images in two directories by matching filenames:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Compare baseline/ vs current/ directories</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co"># Include subdirectories</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co"># Only compare PNG files</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.png$&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Compare baseline/ vs current/ directories</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co"># Include subdirectories</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co"># Only compare PNG files</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.png$&quot;</span>)</span></code></pre></div>
 <p>Note: <code>compare_image_dirs()</code> matches files by name in both
 directories. If there are files in <code>current/</code> with no
 matching baseline, a message is printed showing which files were
@@ -474,39 +482,39 @@ skipped.</p>
 <div id="accessor-functions" class="section level3">
 <h3>Accessor Functions</h3>
 <p>Extract passing or failing pairs from batch results:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co"># Get only failures</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>failures <span class="ot">&lt;-</span> <span class="fu">failed_pairs</span>(results)</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="fu">nrow</span>(failures)</span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; [1] 8</span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co"># Get only passes</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>passes <span class="ot">&lt;-</span> <span class="fu">passed_pairs</span>(results)</span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="fu">nrow</span>(passes)</span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; [1] 42</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co"># Get only failures</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>failures <span class="ot">&lt;-</span> <span class="fu">failed_pairs</span>(results)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">nrow</span>(failures)</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; [1] 8</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co"># Get only passes</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>passes <span class="ot">&lt;-</span> <span class="fu">passed_pairs</span>(results)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="fu">nrow</span>(passes)</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; [1] 42</span></span></code></pre></div>
 </div>
 <div id="batch-summary" class="section level3">
 <h3>Batch Summary</h3>
 <p>Get aggregate statistics for batch results:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">summary</span>(results)</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; odiffr batch comparison: 50 pairs</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; ───────────────────────────────────</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; Passed: 42 (84.0%)</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; Failed: 8 (16.0%)</span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;   - pixel-diff: 6</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;   - layout-diff: 2</span></span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;</span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; Diff statistics (failed pairs):</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;   Min:    0.15%</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt;   Median: 2.34%</span></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt;   Mean:   3.21%</span></span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt;   Max:    12.45%</span></span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt;</span></span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; Worst offenders:</span></span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt;   1. page_a.png (12.45%, 1245 pixels)</span></span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt;   2. page_b.png (8.32%, 832 pixels)</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">summary</span>(results)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; odiffr batch comparison: 50 pairs</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt; ───────────────────────────────────</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; Passed: 42 (84.0%)</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; Failed: 8 (16.0%)</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;   - pixel-diff: 6</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt;   - layout-diff: 2</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt;</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; Diff statistics (failed pairs):</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt;   Min:    0.15%</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt;   Median: 2.34%</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt;   Mean:   3.21%</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt;   Max:    12.45%</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt;</span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt; Worst offenders:</span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt;   1. page_a.png (12.45%, 1245 pixels)</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt;   2. page_b.png (8.32%, 832 pixels)</span></span></code></pre></div>
 </div>
 <div id="column-reference" class="section level3">
 <h3>Column Reference</h3>
@@ -540,18 +548,21 @@ skipped.</p>
 <tr class="odd">
 <td><code>reason</code></td>
 <td>character</td>
-<td><code>&quot;match&quot;</code>, <code>&quot;pixel-diff&quot;</code>, or
-<code>&quot;layout-diff&quot;</code></td>
+<td><code>&quot;match&quot;</code>, <code>&quot;pixel-diff&quot;</code>,
+<code>&quot;layout-diff&quot;</code>, <code>&quot;missing&quot;</code> or
+<code>&quot;error&quot;</code></td>
 </tr>
 <tr class="even">
 <td><code>diff_count</code></td>
 <td>integer</td>
-<td>Number of different pixels</td>
+<td>Number of different pixels (<code>0</code> for a match,
+<code>NA</code> if unknown)</td>
 </tr>
 <tr class="odd">
 <td><code>diff_percentage</code></td>
 <td>numeric</td>
-<td>Percentage of pixels different</td>
+<td>Percentage of pixels different (<code>0</code> for a match,
+<code>NA</code> if unknown)</td>
 </tr>
 <tr class="even">
 <td><code>diff_output</code></td>
@@ -568,50 +579,60 @@ skipped.</p>
 <td>character</td>
 <td>Path to current image</td>
 </tr>
+<tr class="odd">
+<td><code>error</code></td>
+<td>character</td>
+<td>Error message when <code>reason</code> is <code>&quot;missing&quot;</code> or
+<code>&quot;error&quot;</code>, otherwise <code>NA</code></td>
+</tr>
 </tbody>
 </table>
 </div>
 <div id="parallel-processing" class="section level3">
 <h3>Parallel Processing</h3>
 <p>Speed up batch comparisons using multiple CPU cores (Unix only):</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Compare in parallel on macOS/Linux</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_images_batch</span>(pairs, <span class="at">parallel =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co"># Also works with directory comparison</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">parallel =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Compare in parallel on macOS/Linux</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_images_batch</span>(pairs, <span class="at">parallel =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co"># Also works with directory comparison</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">parallel =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <p>Note: On Windows, <code>parallel = TRUE</code> falls back to
 sequential processing.</p>
 </div>
 <div id="html-reports" class="section level3">
 <h3>HTML Reports</h3>
 <p>Generate standalone HTML reports for QA review:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Run batch comparison with diff images</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="st">&quot;baseline/&quot;</span>,</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="st">&quot;current/&quot;</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">diff_dir =</span> <span class="st">&quot;diffs/&quot;</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>)</span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co"># Generate HTML report (links to diff images)</span></span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="at">output_file =</span> <span class="st">&quot;qa-report.html&quot;</span>)</span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co"># Self-contained report with embedded images (for sharing)</span></span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="at">output_file =</span> <span class="st">&quot;qa-report.html&quot;</span>, <span class="at">embed =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a></span>
-<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co"># Portable report with relative paths (move report + diffs together)</span></span>
-<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="at">output_file =</span> <span class="st">&quot;output/report.html&quot;</span>, <span class="at">relative_paths =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a></span>
-<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="co"># Customize the report</span></span>
-<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="fu">batch_report</span>(</span>
-<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a>  results,</span>
-<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;report.html&quot;</span>,</span>
-<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a>  <span class="at">title =</span> <span class="st">&quot;Dashboard Visual Regression&quot;</span>,</span>
-<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a>  <span class="at">n_worst =</span> <span class="dv">20</span>,        <span class="co"># Show top 20 failures</span></span>
-<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>  <span class="at">show_all =</span> <span class="cn">TRUE</span>      <span class="co"># Include all comparisons, not just failures</span></span>
-<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Run batch comparison with diff images</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="st">&quot;baseline/&quot;</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="st">&quot;current/&quot;</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="at">diff_dir =</span> <span class="st">&quot;diffs/&quot;</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>)</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co"># Generate HTML report (links to diff images)</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="at">output_file =</span> <span class="st">&quot;qa-report.html&quot;</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co"># Self-contained report with embedded images (for sharing)</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="at">output_file =</span> <span class="st">&quot;qa-report.html&quot;</span>, <span class="at">embed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="co"># Portable report with relative paths (move report + diffs together)</span></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="at">output_file =</span> <span class="st">&quot;output/report.html&quot;</span>, <span class="at">relative_paths =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co"># Customize the report</span></span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a><span class="fu">batch_report</span>(</span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a>  results,</span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;report.html&quot;</span>,</span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a>  <span class="at">title =</span> <span class="st">&quot;Dashboard Visual Regression&quot;</span>,</span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a>  <span class="at">n_worst =</span> <span class="dv">20</span>,        <span class="co"># Show top 20 failures</span></span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a>  <span class="at">show_all =</span> <span class="cn">TRUE</span>,     <span class="co"># Include all comparisons, not just failures</span></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a>  <span class="at">images =</span> <span class="st">&quot;all&quot;</span>       <span class="co"># Baseline, current and diff side by side</span></span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a>)</span></code></pre></div>
 <p>Reports include: - Pass/fail statistics with visual cards - Failure
 reason breakdown - Diff statistics (min, median, mean, max) - Worst
-offenders table with thumbnails</p>
+offenders table with thumbnails (only the diff image by default;
+baseline, current and diff side by side with
+<code>images = &quot;all&quot;</code>; click a thumbnail to see the full-size
+image)</p>
 <p>The <code>relative_paths</code> option is useful when you want to
 move or share the report along with the diff images folder. With
 relative paths, the report will find the images regardless of where the
@@ -621,155 +642,319 @@ files are moved.</p>
 <h3>One-Liner Workflow</h3>
 <p>For the common workflow of comparing directories and generating a
 report, use <code>compare_dirs_report()</code>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Compare and generate report in one step</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="co"># -&gt; Creates diffs/ directory with diff images and report.html</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co"># Self-contained report with embedded images (recommended for sharing)</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">embed =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co"># See all comparisons, not just failures</span></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">show_all =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a></span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co"># Portable report with relative image paths</span></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">relative_paths =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a></span>
-<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="co"># Combine options: parallel processing with embedded report</span></span>
-<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">parallel =</span> <span class="cn">TRUE</span>, <span class="at">embed =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Compare and generate report in one step</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="co"># -&gt; Creates diffs/ directory with diff images and report.html</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co"># Self-contained report with embedded images (recommended for sharing)</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">embed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co"># See all comparisons, not just failures</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">show_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co"># Portable report with relative image paths</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">relative_paths =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="co"># Combine options: parallel processing with embedded report</span></span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">parallel =</span> <span class="cn">TRUE</span>, <span class="at">embed =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+</div>
+<div id="approving-changes" class="section level3">
+<h3>Approving Changes</h3>
+<p>When differences are intentional, accept the current images as the
+new baselines with <code>approve_changes()</code>:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">diff_dir =</span> <span class="st">&quot;diffs/&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co"># Review the differences first</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="st">&quot;diffs/report.html&quot;</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co"># Preview what would change, then copy current images over the baselines</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="fu">approve_changes</span>(results, <span class="at">dry_run =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="fu">approve_changes</span>(results)</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co"># Approve selected images only, keeping a backup of the old baselines</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="fu">approve_changes</span>(results, <span class="at">which =</span> <span class="st">&quot;home.png&quot;</span>, <span class="at">backup_dir =</span> <span class="st">&quot;baseline-backup/&quot;</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co"># Also delete baselines whose screenshot was intentionally removed</span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a><span class="fu">approve_changes</span>(results, <span class="at">reasons =</span> <span class="st">&quot;missing&quot;</span>, <span class="at">remove_missing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Rows with <code>reason = &quot;error&quot;</code> are never approved. Running
+<code>compare_image_dirs()</code> again afterwards should report only
+matches.</p>
+</div>
+<div id="viewing-a-diff" class="section level3">
+<h3>Viewing a Diff</h3>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Baseline, current and diff image side by side (base graphics)</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">odiff_run</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>, <span class="at">diff_output =</span> <span class="st">&quot;diff.png&quot;</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="fu">plot</span>(result)</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="fu">plot</span>(result, <span class="at">which =</span> <span class="st">&quot;diff&quot;</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="co"># Get the diff image of a compare_images() result or a batch row</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>img <span class="ot">&lt;-</span> <span class="fu">diff_image</span>(<span class="fu">compare_images</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>                                 <span class="at">diff_output =</span> <span class="cn">TRUE</span>))  <span class="co"># magick-image</span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">diff_image</span>(<span class="fu">failed_pairs</span>(results)[<span class="dv">1</span>, ], <span class="at">as =</span> <span class="st">&quot;raster&quot;</span>))  <span class="co"># no magick</span></span></code></pre></div>
 </div>
 <div id="ci-integration" class="section level3">
 <h3>CI Integration</h3>
-<p>The <code>compare_dirs_report()</code> one-liner is ideal for CI
+<p>For a package with image snapshot tests, <code>use_odiffr_ci()</code>
+writes a ready-to-use GitHub Actions workflow to
+<code>.github/workflows/odiffr.yaml</code>. It installs Odiff with
+<code>install_odiff()</code>, runs the testthat tests, adds a
+<code>snapshot_report()</code> summary of changed snapshots to the job
+summary and, if tests fail, uploads the new snapshots and diff images as
+an artifact:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">use_odiffr_ci</span>()</span></code></pre></div>
+<p>For comparisons outside testthat, the
+<code>compare_dirs_report()</code> one-liner is ideal for CI
 pipelines:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># In your CI script</span></span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a></span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co"># Fail the build if any images differ</span></span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(<span class="sc">!</span>results<span class="sc">$</span>match)) {</span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Visual regression detected! See diffs/ for details.&quot;</span>)</span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># In your CI script</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_dirs_report</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co"># Fail the build if any images differ</span></span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(<span class="sc">!</span>results<span class="sc">$</span>match)) {</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Visual regression detected! See diffs/ for details.&quot;</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>}</span></code></pre></div>
 <p>For GitHub Actions, upload <code>diffs/</code> as an artifact on
 failure:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Upload diffs</span></span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> failure()</span></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v4</span></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> visual-diffs</span></span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> diffs/</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Upload diffs</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> failure()</span></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v4</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> visual-diffs</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> diffs/</span></span></code></pre></div>
+</div>
+<div id="ci-outputs" class="section level3">
+<h3>CI Outputs</h3>
+<p>Two functions write batch results in formats that CI systems
+understand:</p>
+<ul>
+<li><code>batch_markdown()</code> produces a GitHub-flavoured Markdown
+summary (pass/fail line, failure reasons and a worst offenders table).
+When the <code>GITHUB_STEP_SUMMARY</code> environment variable is set,
+as it is in GitHub Actions, the summary is appended to that file and
+shows up on the job’s summary page. Elsewhere it returns the Markdown as
+a string.</li>
+<li><code>batch_junit()</code> writes a JUnit XML report with one test
+case per comparison. Differences and missing files are failures,
+comparisons that could not be run are errors. Most CI test reporters can
+display it.</li>
+</ul>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">diff_dir =</span> <span class="st">&quot;diffs/&quot;</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="fu">batch_markdown</span>(results)                    <span class="co"># GitHub job summary</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="fu">batch_junit</span>(results, <span class="st">&quot;odiffr-junit.xml&quot;</span>)   <span class="co"># JUnit XML</span></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="fu">batch_report</span>(results, <span class="st">&quot;diffs/report.html&quot;</span>, <span class="at">images =</span> <span class="st">&quot;all&quot;</span>, <span class="at">embed =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>A complete GitHub Actions step:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Compare images</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>    library(odiffr)</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>    results &lt;- compare_image_dirs(&quot;baseline/&quot;, &quot;current/&quot;, diff_dir = &quot;diffs/&quot;)</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>    batch_markdown(results)</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>    batch_junit(results, &quot;odiffr-junit.xml&quot;)</span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a>    batch_report(results, &quot;diffs/report.html&quot;, images = &quot;all&quot;,</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>                 embed = TRUE)</span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>    if (any(!results$match)) stop(&quot;Visual regression detected!&quot;)</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a><span class="at">  </span><span class="fu">shell</span><span class="kw">:</span><span class="at"> Rscript {0}</span></span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Upload diffs and report</span></span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> always()</span></span>
+<span id="cb24-14"><a href="#cb24-14" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v4</span></span>
+<span id="cb24-15"><a href="#cb24-15" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb24-16"><a href="#cb24-16" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> visual-diffs</span></span>
+<span id="cb24-17"><a href="#cb24-17" tabindex="-1"></a><span class="fu">    path</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb24-18"><a href="#cb24-18" tabindex="-1"></a>      diffs/</span>
+<span id="cb24-19"><a href="#cb24-19" tabindex="-1"></a>      odiffr-junit.xml</span></code></pre></div>
 </div>
 </div>
 <div id="working-with-magick" class="section level2">
 <h2>Working with magick</h2>
 <p>Odiffr integrates with the <a href="https://cran.r-project.org/package=magick">magick</a> package for
 preprocessing:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">library</span>(magick)</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a></span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="co"># Read and preprocess images</span></span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>img1 <span class="ot">&lt;-</span> <span class="fu">image_read</span>(<span class="st">&quot;baseline.png&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>  <span class="fu">image_resize</span>(<span class="st">&quot;800x600&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>  <span class="fu">image_convert</span>(<span class="at">colorspace =</span> <span class="st">&quot;sRGB&quot;</span>)</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a></span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>img2 <span class="ot">&lt;-</span> <span class="fu">image_read</span>(<span class="st">&quot;current.png&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>  <span class="fu">image_resize</span>(<span class="st">&quot;800x600&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>  <span class="fu">image_convert</span>(<span class="at">colorspace =</span> <span class="st">&quot;sRGB&quot;</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a></span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="co"># Compare directly</span></span>
-<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(img1, img2)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">library</span>(magick)</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a><span class="co"># Read and preprocess images</span></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>img1 <span class="ot">&lt;-</span> <span class="fu">image_read</span>(<span class="st">&quot;baseline.png&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>  <span class="fu">image_resize</span>(<span class="st">&quot;800x600&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>  <span class="fu">image_convert</span>(<span class="at">colorspace =</span> <span class="st">&quot;sRGB&quot;</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>img2 <span class="ot">&lt;-</span> <span class="fu">image_read</span>(<span class="st">&quot;current.png&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a>  <span class="fu">image_resize</span>(<span class="st">&quot;800x600&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a>  <span class="fu">image_convert</span>(<span class="at">colorspace =</span> <span class="st">&quot;sRGB&quot;</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a></span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1"></a><span class="co"># Compare directly</span></span>
+<span id="cb25-13"><a href="#cb25-13" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">compare_images</span>(img1, img2)</span></code></pre></div>
 </div>
 <div id="low-level-api" class="section level2">
 <h2>Low-Level API</h2>
 <p>For full control, use <code>odiff_run()</code>:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">odiff_run</span>(</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="at">img1 =</span> <span class="st">&quot;baseline.png&quot;</span>,</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">img2 =</span> <span class="st">&quot;current.png&quot;</span>,</span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="at">diff_output =</span> <span class="st">&quot;diff.png&quot;</span>,</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  <span class="at">threshold =</span> <span class="fl">0.1</span>,</span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>  <span class="at">antialiasing =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>  <span class="at">fail_on_layout =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>  <span class="at">diff_mask =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a>  <span class="at">diff_overlay =</span> <span class="fl">0.5</span>,</span>
-<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a>  <span class="at">diff_color =</span> <span class="st">&quot;#FF00FF&quot;</span>,</span>
-<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a>  <span class="at">diff_lines =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  <span class="at">reduce_ram =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>  <span class="at">ignore_regions =</span> <span class="fu">list</span>(<span class="fu">ignore_region</span>(<span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">100</span>, <span class="dv">50</span>)),</span>
-<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a>  <span class="at">timeout =</span> <span class="dv">60</span></span>
-<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>)</span>
-<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a></span>
-<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a><span class="co"># Detailed result</span></span>
-<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a>result<span class="sc">$</span>match</span>
-<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a>result<span class="sc">$</span>reason</span>
-<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a>result<span class="sc">$</span>diff_count</span>
-<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a>result<span class="sc">$</span>diff_percentage</span>
-<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a>result<span class="sc">$</span>diff_lines</span>
-<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a>result<span class="sc">$</span>exit_code</span>
-<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a>result<span class="sc">$</span>duration</span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">odiff_run</span>(</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>  <span class="at">img1 =</span> <span class="st">&quot;baseline.png&quot;</span>,</span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  <span class="at">img2 =</span> <span class="st">&quot;current.png&quot;</span>,</span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>  <span class="at">diff_output =</span> <span class="st">&quot;diff.png&quot;</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>  <span class="at">threshold =</span> <span class="fl">0.1</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>  <span class="at">antialiasing =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>  <span class="at">fail_on_layout =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>  <span class="at">diff_mask =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a>  <span class="at">diff_overlay =</span> <span class="fl">0.5</span>,</span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>  <span class="at">diff_color =</span> <span class="st">&quot;#FF00FF&quot;</span>,</span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a>  <span class="at">diff_lines =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a>  <span class="at">reduce_ram =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a>  <span class="at">enable_asm =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a>  <span class="at">ignore_regions =</span> <span class="fu">list</span>(<span class="fu">ignore_region</span>(<span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">100</span>, <span class="dv">50</span>)),</span>
+<span id="cb26-15"><a href="#cb26-15" tabindex="-1"></a>  <span class="at">timeout =</span> <span class="dv">60</span></span>
+<span id="cb26-16"><a href="#cb26-16" tabindex="-1"></a>)</span>
+<span id="cb26-17"><a href="#cb26-17" tabindex="-1"></a></span>
+<span id="cb26-18"><a href="#cb26-18" tabindex="-1"></a><span class="co"># Detailed result</span></span>
+<span id="cb26-19"><a href="#cb26-19" tabindex="-1"></a>result<span class="sc">$</span>match</span>
+<span id="cb26-20"><a href="#cb26-20" tabindex="-1"></a>result<span class="sc">$</span>reason</span>
+<span id="cb26-21"><a href="#cb26-21" tabindex="-1"></a>result<span class="sc">$</span>diff_count</span>
+<span id="cb26-22"><a href="#cb26-22" tabindex="-1"></a>result<span class="sc">$</span>diff_percentage</span>
+<span id="cb26-23"><a href="#cb26-23" tabindex="-1"></a>result<span class="sc">$</span>diff_lines</span>
+<span id="cb26-24"><a href="#cb26-24" tabindex="-1"></a>result<span class="sc">$</span>exit_code</span>
+<span id="cb26-25"><a href="#cb26-25" tabindex="-1"></a>result<span class="sc">$</span>duration</span></code></pre></div>
 </div>
 <div id="binary-management" class="section level2">
 <h2>Binary Management</h2>
-<div id="update-binary" class="section level3">
-<h3>Update Binary</h3>
+<div id="install-or-update-the-binary" class="section level3">
+<h3>Install or Update the Binary</h3>
 <p>Download the latest Odiff binary to your user cache:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># Latest version</span></span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">odiffr_update</span>()</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a></span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co"># Specific version</span></span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="fu">odiffr_update</span>(<span class="at">version =</span> <span class="st">&quot;v4.1.2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># Latest version</span></span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a><span class="fu">install_odiff</span>()</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a><span class="co"># Specific version, replacing the cached binary</span></span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a><span class="fu">install_odiff</span>(<span class="at">version =</span> <span class="st">&quot;v4.1.2&quot;</span>, <span class="at">force =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p><code>odiffr_update()</code> is the lower-level function behind
+<code>install_odiff()</code>.</p>
 </div>
 <div id="custom-binary-path" class="section level3">
 <h3>Custom Binary Path</h3>
 <p>Use a specific binary (useful for validated environments):</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.path =</span> <span class="st">&quot;/validated/bin/odiff-4.1.2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.path =</span> <span class="st">&quot;/validated/bin/odiff-4.1.2&quot;</span>)</span></code></pre></div>
+</div>
+<div id="faster-comparisons-with-npm-installs" class="section level3">
+<h3>Faster comparisons with npm installs</h3>
+<p>Since odiff 4.4, the npm package <code>odiff-bin</code> installs a
+Node.js launcher that starts Node before running the native binary,
+which adds tens of milliseconds to each comparison. Odiffr detects such
+a launcher on the PATH automatically and runs the native binary from the
+npm installation directly (falling back to the launcher if the binary
+cannot be found). Nothing needs configuring:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>info <span class="ot">&lt;-</span> <span class="fu">odiff_info</span>()</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>info<span class="sc">$</span>path  <span class="co"># the native binary</span></span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>info<span class="sc">$</span>shim  <span class="co"># the npm launcher it was resolved from (NA if none)</span></span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a></span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a><span class="co"># Opt out and use the PATH entry as-is</span></span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.resolve_npm =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>A path set with <code>options(odiffr.path = ...)</code> is always
+used exactly as given.</p>
 </div>
 <div id="cache-management" class="section level3">
 <h3>Cache Management</h3>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># View cache location</span></span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="fu">odiffr_cache_path</span>()</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;/Users/benwolstenholme/Library/Caches/org.R-project.R/R/odiffr&quot;</span></span></code></pre></div>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="co"># Clear cached binaries</span></span>
-<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="fu">odiffr_clear_cache</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="co"># View cache location</span></span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a><span class="fu">odiffr_cache_path</span>()</span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;/root/.cache/R/odiffr&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="co"># Clear cached binaries</span></span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a><span class="fu">odiffr_clear_cache</span>()</span></code></pre></div>
 </div>
 </div>
 <div id="visual-regression-testing-with-testthat" class="section level2">
 <h2>Visual Regression Testing with testthat</h2>
 <p>Odiffr provides dedicated testthat expectations for visual regression
 testing:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">library</span>(testthat)</span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">library</span>(odiffr)</span>
-<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a></span>
-<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;dashboard renders correctly&quot;</span>, {</span>
-<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>  <span class="fu">skip_if_no_odiff</span>()</span>
-<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a></span>
-<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a>  <span class="co"># Generate current screenshot (using your preferred method)</span></span>
-<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>  webshot2<span class="sc">::</span><span class="fu">webshot</span>(<span class="st">&quot;http://localhost:3838/dashboard&quot;</span>, <span class="st">&quot;current.png&quot;</span>)</span>
-<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a></span>
-<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a>  <span class="co"># Compare to baseline using expect_images_match()</span></span>
-<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a>  <span class="fu">expect_images_match</span>(</span>
-<span id="cb25-12"><a href="#cb25-12" tabindex="-1"></a>    <span class="st">&quot;current.png&quot;</span>,</span>
-<span id="cb25-13"><a href="#cb25-13" tabindex="-1"></a>    <span class="st">&quot;baselines/dashboard.png&quot;</span>,</span>
-<span id="cb25-14"><a href="#cb25-14" tabindex="-1"></a>    <span class="at">threshold =</span> <span class="fl">0.1</span>,</span>
-<span id="cb25-15"><a href="#cb25-15" tabindex="-1"></a>    <span class="at">antialiasing =</span> <span class="cn">TRUE</span></span>
-<span id="cb25-16"><a href="#cb25-16" tabindex="-1"></a>  )</span>
-<span id="cb25-17"><a href="#cb25-17" tabindex="-1"></a>})</span>
-<span id="cb25-18"><a href="#cb25-18" tabindex="-1"></a></span>
-<span id="cb25-19"><a href="#cb25-19" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;button changes on hover&quot;</span>, {</span>
-<span id="cb25-20"><a href="#cb25-20" tabindex="-1"></a>  <span class="fu">skip_if_no_odiff</span>()</span>
-<span id="cb25-21"><a href="#cb25-21" tabindex="-1"></a></span>
-<span id="cb25-22"><a href="#cb25-22" tabindex="-1"></a>  <span class="co"># Assert that images are different</span></span>
-<span id="cb25-23"><a href="#cb25-23" tabindex="-1"></a>  <span class="fu">expect_images_differ</span>(</span>
-<span id="cb25-24"><a href="#cb25-24" tabindex="-1"></a>    <span class="st">&quot;button_normal.png&quot;</span>,</span>
-<span id="cb25-25"><a href="#cb25-25" tabindex="-1"></a>    <span class="st">&quot;button_hover.png&quot;</span></span>
-<span id="cb25-26"><a href="#cb25-26" tabindex="-1"></a>  )</span>
-<span id="cb25-27"><a href="#cb25-27" tabindex="-1"></a>})</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">library</span>(testthat)</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a><span class="fu">library</span>(odiffr)</span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;dashboard renders correctly&quot;</span>, {</span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a>  <span class="fu">skip_if_no_odiff</span>()</span>
+<span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" tabindex="-1"></a>  <span class="co"># Generate current screenshot (using your preferred method)</span></span>
+<span id="cb32-8"><a href="#cb32-8" tabindex="-1"></a>  webshot2<span class="sc">::</span><span class="fu">webshot</span>(<span class="st">&quot;http://localhost:3838/dashboard&quot;</span>, <span class="st">&quot;current.png&quot;</span>)</span>
+<span id="cb32-9"><a href="#cb32-9" tabindex="-1"></a></span>
+<span id="cb32-10"><a href="#cb32-10" tabindex="-1"></a>  <span class="co"># Compare to baseline using expect_images_match()</span></span>
+<span id="cb32-11"><a href="#cb32-11" tabindex="-1"></a>  <span class="fu">expect_images_match</span>(</span>
+<span id="cb32-12"><a href="#cb32-12" tabindex="-1"></a>    <span class="st">&quot;current.png&quot;</span>,</span>
+<span id="cb32-13"><a href="#cb32-13" tabindex="-1"></a>    <span class="st">&quot;baselines/dashboard.png&quot;</span>,</span>
+<span id="cb32-14"><a href="#cb32-14" tabindex="-1"></a>    <span class="at">threshold =</span> <span class="fl">0.1</span>,</span>
+<span id="cb32-15"><a href="#cb32-15" tabindex="-1"></a>    <span class="at">antialiasing =</span> <span class="cn">TRUE</span></span>
+<span id="cb32-16"><a href="#cb32-16" tabindex="-1"></a>  )</span>
+<span id="cb32-17"><a href="#cb32-17" tabindex="-1"></a>})</span>
+<span id="cb32-18"><a href="#cb32-18" tabindex="-1"></a></span>
+<span id="cb32-19"><a href="#cb32-19" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;button changes on hover&quot;</span>, {</span>
+<span id="cb32-20"><a href="#cb32-20" tabindex="-1"></a>  <span class="fu">skip_if_no_odiff</span>()</span>
+<span id="cb32-21"><a href="#cb32-21" tabindex="-1"></a></span>
+<span id="cb32-22"><a href="#cb32-22" tabindex="-1"></a>  <span class="co"># Assert that images are different</span></span>
+<span id="cb32-23"><a href="#cb32-23" tabindex="-1"></a>  <span class="fu">expect_images_differ</span>(</span>
+<span id="cb32-24"><a href="#cb32-24" tabindex="-1"></a>    <span class="st">&quot;button_normal.png&quot;</span>,</span>
+<span id="cb32-25"><a href="#cb32-25" tabindex="-1"></a>    <span class="st">&quot;button_hover.png&quot;</span></span>
+<span id="cb32-26"><a href="#cb32-26" tabindex="-1"></a>  )</span>
+<span id="cb32-27"><a href="#cb32-27" tabindex="-1"></a>})</span></code></pre></div>
+<div id="testing-plots" class="section level3">
+<h3>Testing Plots</h3>
+<p>Plots can be passed anywhere an image is accepted: a ggplot object, a
+function of no arguments that draws a plot (base or grid graphics), or a
+recorded plot from <code>grDevices::recordPlot()</code>. Plots are
+rendered to a temporary PNG with <code>ragg::agg_png()</code> if ragg is
+installed (recommended, for consistent output across platforms),
+otherwise with <code>grDevices::png()</code>. Control the size,
+resolution and background with <code>plot_options()</code>:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;scatter plot matches baseline&quot;</span>, {</span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(mtcars, <span class="fu">aes</span>(wt, mpg)) <span class="sc">+</span> <span class="fu">geom_point</span>()</span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" tabindex="-1"></a>  <span class="fu">expect_images_match</span>(</span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1"></a>    p,</span>
+<span id="cb33-8"><a href="#cb33-8" tabindex="-1"></a>    <span class="fu">test_path</span>(<span class="st">&quot;baselines/scatter.png&quot;</span>),</span>
+<span id="cb33-9"><a href="#cb33-9" tabindex="-1"></a>    <span class="at">plot_options =</span> <span class="fu">plot_options</span>(<span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">res =</span> <span class="dv">96</span>)</span>
+<span id="cb33-10"><a href="#cb33-10" tabindex="-1"></a>  )</span>
+<span id="cb33-11"><a href="#cb33-11" tabindex="-1"></a>})</span>
+<span id="cb33-12"><a href="#cb33-12" tabindex="-1"></a></span>
+<span id="cb33-13"><a href="#cb33-13" tabindex="-1"></a><span class="co"># compare_images() accepts plots too; they are labelled &quot;&lt;plot&gt;&quot;</span></span>
+<span id="cb33-14"><a href="#cb33-14" tabindex="-1"></a><span class="fu">compare_images</span>(<span class="st">&quot;baseline_hist.png&quot;</span>, <span class="cf">function</span>() <span class="fu">hist</span>(mtcars<span class="sc">$</span>mpg))</span></code></pre></div>
+<p>The baseline must be rendered with the same
+<code>plot_options()</code> (and graphics device) as the plot being
+tested.</p>
+</div>
+<div id="snapshot-testing-with-expect_snapshot_image" class="section level3">
+<h3>Snapshot Testing with expect_snapshot_image()</h3>
+<p>Instead of managing baseline files yourself,
+<code>expect_snapshot_image()</code> builds on testthat’s snapshot
+workflow: the first run saves the image to
+<code>tests/testthat/_snaps/&lt;test-file&gt;/&lt;name&gt;.png</code>,
+and later runs compare against it with odiff, so differences below
+<code>threshold</code> (or inside <code>ignore_regions</code>) do not
+fail the test. It accepts image files, magick-image objects and
+plots.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;plots are stable&quot;</span>, {</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(mtcars, <span class="fu">aes</span>(wt, mpg)) <span class="sc">+</span> <span class="fu">geom_point</span>()</span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a>  <span class="fu">expect_snapshot_image</span>(p)  <span class="co"># snapshot name: &quot;p.png&quot;</span></span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a>  <span class="fu">expect_snapshot_image</span>(</span>
+<span id="cb34-6"><a href="#cb34-6" tabindex="-1"></a>    <span class="cf">function</span>() <span class="fu">hist</span>(mtcars<span class="sc">$</span>mpg),</span>
+<span id="cb34-7"><a href="#cb34-7" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">&quot;mpg-hist&quot;</span>,          <span class="co"># required for inline expressions</span></span>
+<span id="cb34-8"><a href="#cb34-8" tabindex="-1"></a>    <span class="at">antialiasing =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb34-9"><a href="#cb34-9" tabindex="-1"></a>    <span class="at">variant =</span> <span class="fu">Sys.info</span>()[[<span class="st">&quot;sysname&quot;</span>]]  <span class="co"># separate snapshots per OS</span></span>
+<span id="cb34-10"><a href="#cb34-10" tabindex="-1"></a>  )</span>
+<span id="cb34-11"><a href="#cb34-11" tabindex="-1"></a>})</span></code></pre></div>
+<p>When a snapshot changes, the new image is saved next to it as
+<code>&lt;name&gt;.new.png</code>. Review the changes side by side and
+accept the intended ones:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a>testthat<span class="sc">::</span><span class="fu">snapshot_review</span>()</span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a>testthat<span class="sc">::</span><span class="fu">snapshot_accept</span>()</span></code></pre></div>
+<p>Like <code>testthat::expect_snapshot_file()</code>,
+<code>expect_snapshot_image()</code> is skipped on CRAN. To use odiff
+comparison for image files you write yourself, pass
+<code>compare_file_odiff()</code> as the <code>compare</code> argument
+of <code>testthat::expect_snapshot_file()</code>.</p>
+</div>
 <div id="diff-images-on-failure" class="section level3">
 <h3>Diff Images on Failure</h3>
 <p>When <code>expect_images_match()</code> fails, a diff image is
 automatically saved to <code>tests/testthat/_odiffr/</code> for
-debugging. Control this behavior with options:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="co"># Disable diff image saving</span></span>
-<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.save_diff =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a></span>
-<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a><span class="co"># Use a custom directory</span></span>
-<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.diff_dir =</span> <span class="st">&quot;my_diffs/&quot;</span>)</span></code></pre></div>
+debugging. Control this behaviour with options:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="co"># Disable diff image saving</span></span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.save_diff =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" tabindex="-1"></a></span>
+<span id="cb36-4"><a href="#cb36-4" tabindex="-1"></a><span class="co"># Use a custom directory</span></span>
+<span id="cb36-5"><a href="#cb36-5" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.diff_dir =</span> <span class="st">&quot;my_diffs/&quot;</span>)</span></code></pre></div>
 </div>
 <div id="comparison-with-vdiffr" class="section level3">
 <h3>Comparison with vdiffr</h3>
@@ -777,8 +962,9 @@ debugging. Control this behavior with options:</p>
 complementary tools: - <strong>vdiffr</strong> uses SVG-based comparison
 for ggplot2/grid graphics snapshots - <strong>odiffr</strong> uses
 pixel-based comparison for screenshots, rendered images, and bitmaps</p>
-<p>Use vdiffr for testing R plots; use odiffr for testing screenshots of
-Shiny apps, web pages, PDFs, or any raster image comparison.</p>
+<p>Use vdiffr for SVG snapshots of R plots; use odiffr for testing
+screenshots of Shiny apps, web pages, PDFs, rendered (raster) plots, or
+any raster image comparison.</p>
 </div>
 </div>
 <div id="for-validated-environments" class="section level2">
@@ -793,12 +979,43 @@ document binary version for audit trails</li>
 <li><strong>Base R core</strong>: Zero external runtime dependencies for
 core functions</li>
 </ol>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># Pin to a specific validated binary</span></span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.path =</span> <span class="st">&quot;/validated/bin/odiff-4.1.2&quot;</span>)</span>
-<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a></span>
-<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a><span class="co"># Document version for validation</span></span>
-<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>info <span class="ot">&lt;-</span> <span class="fu">odiff_info</span>()</span>
-<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">&quot;Using odiff %s from %s&quot;</span>, info<span class="sc">$</span>version, info<span class="sc">$</span>source)</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a><span class="co"># Pin to a specific validated binary</span></span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.path =</span> <span class="st">&quot;/validated/bin/odiff-4.1.2&quot;</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1"></a><span class="co"># Document version for validation</span></span>
+<span id="cb37-5"><a href="#cb37-5" tabindex="-1"></a>info <span class="ot">&lt;-</span> <span class="fu">odiff_info</span>()</span>
+<span id="cb37-6"><a href="#cb37-6" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">&quot;Using odiff %s from %s&quot;</span>, info<span class="sc">$</span>version, info<span class="sc">$</span>source)</span></code></pre></div>
+<div id="audit-records" class="section level3">
+<h3>Audit records</h3>
+<p><code>audit_record()</code> turns comparison results into a
+documented, machine-readable evidence record that supports audit trails.
+For every comparison it records the image paths with their hashes and
+sizes, the diff image (if any) and its hash, and the outcome
+(<code>match</code>, <code>reason</code>, <code>diff_count</code>,
+<code>diff_percentage</code>, <code>error</code>). A header records the
+schema version (<code>&quot;odiffr-audit/1&quot;</code>), a UTC timestamp, the
+odiffr and odiff versions, the odiff binary path and hash, the R
+version, platform and user, and the comparison parameters.</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="co"># odiff_run() results carry their parameters</span></span>
+<span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">odiff_run</span>(<span class="st">&quot;baseline.png&quot;</span>, <span class="st">&quot;current.png&quot;</span>, <span class="st">&quot;diff.png&quot;</span>,</span>
+<span id="cb38-3"><a href="#cb38-3" tabindex="-1"></a>                    <span class="at">threshold =</span> <span class="fl">0.05</span>)</span>
+<span id="cb38-4"><a href="#cb38-4" tabindex="-1"></a>rec <span class="ot">&lt;-</span> <span class="fu">audit_record</span>(result)</span>
+<span id="cb38-5"><a href="#cb38-5" tabindex="-1"></a>rec<span class="sc">$</span>header<span class="sc">$</span>odiff_version</span>
+<span id="cb38-6"><a href="#cb38-6" tabindex="-1"></a>rec<span class="sc">$</span>comparisons[, <span class="fu">c</span>(<span class="st">&quot;img1_hash&quot;</span>, <span class="st">&quot;img2_hash&quot;</span>, <span class="st">&quot;match&quot;</span>)]</span>
+<span id="cb38-7"><a href="#cb38-7" tabindex="-1"></a></span>
+<span id="cb38-8"><a href="#cb38-8" tabindex="-1"></a><span class="co"># Write a JSON evidence file (requires jsonlite)</span></span>
+<span id="cb38-9"><a href="#cb38-9" tabindex="-1"></a><span class="fu">audit_record</span>(result, <span class="at">file =</span> <span class="st">&quot;validation/comparison-audit.json&quot;</span>)</span>
+<span id="cb38-10"><a href="#cb38-10" tabindex="-1"></a></span>
+<span id="cb38-11"><a href="#cb38-11" tabindex="-1"></a><span class="co"># Batch results: pass the parameters you used; CSV has one row per pair</span></span>
+<span id="cb38-12"><a href="#cb38-12" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">compare_image_dirs</span>(<span class="st">&quot;baseline/&quot;</span>, <span class="st">&quot;current/&quot;</span>, <span class="at">threshold =</span> <span class="fl">0.05</span>)</span>
+<span id="cb38-13"><a href="#cb38-13" tabindex="-1"></a><span class="fu">audit_record</span>(results, <span class="at">file =</span> <span class="st">&quot;validation/audit.csv&quot;</span>, <span class="at">format =</span> <span class="st">&quot;csv&quot;</span>,</span>
+<span id="cb38-14"><a href="#cb38-14" tabindex="-1"></a>             <span class="at">params =</span> <span class="fu">list</span>(<span class="at">threshold =</span> <span class="fl">0.05</span>))</span></code></pre></div>
+<p>SHA-256 hashing uses the openssl or digest package; use
+<code>hash = &quot;md5&quot;</code> to rely on base R only. Files are hashed when
+<code>audit_record()</code> is called, so create the record straight
+after the comparison. See <code>?audit_record</code> for the full
+schema.</p>
+</div>
 </div>
 
 

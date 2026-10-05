@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Using odiffr with shinytest2</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Using odiffr with shinytest2</h1>
+
+
+
+<div id="why" class="section level2">
+<h2>Why</h2>
+<p><a href="https://rstudio.github.io/shinytest2/">shinytest2</a> can
+take screenshots of a running Shiny app with
+<code>app$expect_screenshot()</code> and store them as testthat
+snapshots. Its own documentation calls screenshots the most brittle kind
+of expectation, for good reasons:</p>
+<ul>
+<li>By default a screenshot must match the stored snapshot exactly (or
+within a blur-based threshold). Chromium renders the edges of rounded
+corners, circles, borders and text with slightly different anti-aliasing
+from run to run and from machine to machine, so screenshots that look
+identical often do not match.</li>
+<li>When a screenshot does change, you get a new <code>.new.png</code>
+file but no picture of <em>what</em> changed.</li>
+</ul>
+<p>odiffr’s <code>compare_file_odiff()</code> plugs into the
+<code>compare</code> argument of <code>expect_screenshot()</code> and
+addresses both:</p>
+<ul>
+<li>It compares the images with <a href="https://github.com/dmtrKovalenko/odiff">odiff</a>, with a
+perceptual colour threshold and optional detection of anti-aliased
+pixels.</li>
+<li>When a comparison fails, it writes a diff image highlighting the
+changed pixels and prints where it is.</li>
+</ul>
+<p>odiffr does not drive the browser; shinytest2 still takes the
+screenshots. You need the odiff binary (see
+<code>vignette(&quot;getting-started&quot;)</code>).</p>
+</div>
+<div id="the-one-liner" class="section level2">
+<h2>The one-liner</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(shinytest2)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;app renders&quot;</span>, {</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  app <span class="ot">&lt;-</span> AppDriver<span class="sc">$</span><span class="fu">new</span>(<span class="at">variant =</span> <span class="fu">platform_variant</span>(), <span class="at">name =</span> <span class="st">&quot;app&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  app<span class="sc">$</span><span class="fu">expect_screenshot</span>(</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>    <span class="at">compare =</span> odiffr<span class="sc">::</span><span class="fu">compare_file_odiff</span>(<span class="at">preset =</span> <span class="st">&quot;screenshot&quot;</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  )</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>})</span></code></pre></div>
+<p><code>compare_file_odiff()</code> returns a function of the old and
+new screenshot paths that returns <code>TRUE</code> or
+<code>FALSE</code>, which is what <code>expect_screenshot()</code>
+expects. When you supply <code>compare</code>, shinytest2’s
+<code>threshold</code> and <code>kernel_size</code> arguments are not
+used.</p>
+</div>
+<div id="presets" class="section level2">
+<h2>Presets</h2>
+<p><code>preset</code> chooses the comparison settings (see
+<code>?odiff_preset</code>):</p>
+<table>
+<colgroup>
+<col width="34%" />
+<col width="22%" />
+<col width="27%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Preset</th>
+<th align="right"><code>threshold</code></th>
+<th align="left"><code>antialiasing</code></th>
+<th align="left">Use for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>&quot;strict&quot;</code></td>
+<td align="right">0</td>
+<td align="left"><code>FALSE</code></td>
+<td align="left">Any pixel change fails</td>
+</tr>
+<tr class="even">
+<td align="left"><code>&quot;default&quot;</code></td>
+<td align="right">0.1</td>
+<td align="left"><code>FALSE</code></td>
+<td align="left">odiffr’s usual defaults</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>&quot;screenshot&quot;</code></td>
+<td align="right">0.1</td>
+<td align="left"><code>TRUE</code></td>
+<td align="left">Browser screenshots on one platform</td>
+</tr>
+<tr class="even">
+<td align="left"><code>&quot;cross_platform&quot;</code></td>
+<td align="right">0.2</td>
+<td align="left"><code>TRUE</code></td>
+<td align="left">Baselines shared across machines</td>
+</tr>
+</tbody>
+</table>
+<p><code>&quot;screenshot&quot;</code> ignores anti-aliased pixels but keeps the
+colour threshold low, so a real colour change is still caught. In
+odiffr’s calibration tests, rounded shapes and 1px borders shifted by a
+quarter or half pixel fail with the default settings and pass with
+<code>&quot;screenshot&quot;</code>, while a new 10 x 10 pixel element or a 10 x
+10 pixel patch changing from blue to green fails.</p>
+<p><code>&quot;cross_platform&quot;</code> also tolerates edges moved by about
+half a pixel and small colour or gamma shifts. The price is that it can
+miss changes between colours of similar brightness (blue to green) and
+very faint elements.</p>
+<p>Arguments you pass explicitly override the preset, and you can still
+add <code>ignore_regions</code>, e.g. for a clock or a random plot:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>app<span class="sc">$</span><span class="fu">expect_screenshot</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">compare =</span> odiffr<span class="sc">::</span><span class="fu">compare_file_odiff</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>    <span class="at">preset =</span> <span class="st">&quot;screenshot&quot;</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="at">threshold =</span> <span class="fl">0.15</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="at">ignore_regions =</span> <span class="fu">list</span>(odiffr<span class="sc">::</span><span class="fu">ignore_region</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">300</span>, <span class="dv">40</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  )</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="use-it-in-every-test" class="section level2">
+<h2>Use it in every test</h2>
+<p>Define a small helper once in <code>tests/testthat/setup.R</code> (or
+a <code>helper-*.R</code> file):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># tests/testthat/setup.R</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>compare_screenshot <span class="ot">&lt;-</span> odiffr<span class="sc">::</span><span class="fu">compare_file_odiff</span>(<span class="at">preset =</span> <span class="st">&quot;screenshot&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>expect_app_screenshot <span class="ot">&lt;-</span> <span class="cf">function</span>(app, ...) {</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  app<span class="sc">$</span><span class="fu">expect_screenshot</span>(..., <span class="at">compare =</span> compare_screenshot)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>}</span></code></pre></div>
+<p>and use it in your tests:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;filters update the table&quot;</span>, {</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  app <span class="ot">&lt;-</span> AppDriver<span class="sc">$</span><span class="fu">new</span>(<span class="at">variant =</span> <span class="fu">platform_variant</span>(), <span class="at">name =</span> <span class="st">&quot;filters&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  app<span class="sc">$</span><span class="fu">set_inputs</span>(<span class="at">species =</span> <span class="st">&quot;setosa&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="fu">expect_app_screenshot</span>(app)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="fu">expect_app_screenshot</span>(app, <span class="at">selector =</span> <span class="st">&quot;#table&quot;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>})</span></code></pre></div>
+</div>
+<div id="where-the-diff-images-go" class="section level2">
+<h2>Where the diff images go</h2>
+<p>testthat deletes unrecognised files inside
+<code>tests/testthat/_snaps/</code>, so diff images are written
+elsewhere: by default to <code>tests/testthat/_odiffr/</code>, mirroring
+the snapshot layout and named after the snapshot. For example, a
+failing</p>
+<pre><code>tests/testthat/_snaps/linux-4.4/app/filters-001.png</code></pre>
+<p>produces</p>
+<pre><code>tests/testthat/_odiffr/linux-4.4/app/filters-001_diff.png</code></pre>
+<p>and the test output shows a message such as</p>
+<pre><code>odiff: 1.26% pixels differ (126 px) in &#39;filters-001.png&#39;; diff image: /path/to/tests/testthat/_odiffr/linux-4.4/app/filters-001_diff.png</code></pre>
+<p>Re-running overwrites the diff, and a diff is removed once the
+screenshot matches again. Add <code>tests/testthat/_odiffr/</code> to
+<code>.gitignore</code> and <code>^tests/testthat/_odiffr$</code> to
+<code>.Rbuildignore</code>.</p>
+<p>To put the diff images somewhere else, pass <code>diff_dir</code>, or
+set an option in <code>setup.R</code>; <code>diff_dir = FALSE</code>
+turns them off:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">options</span>(<span class="at">odiffr.snapshot_diff_dir =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;screenshot-diffs&quot;</span>))</span></code></pre></div>
+</div>
+<div id="reviewing-changes" class="section level2">
+<h2>Reviewing changes</h2>
+<p>Changed screenshots are handled with testthat’s usual tools. Run</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>testthat<span class="sc">::</span><span class="fu">snapshot_review</span>(<span class="st">&quot;app&quot;</span>)</span></code></pre></div>
+<p>to compare the old and new screenshots side by side, and accept
+intended changes with <code>testthat::snapshot_accept(&quot;app&quot;)</code>. The
+diff image in <code>_odiffr/</code> shows exactly which pixels changed,
+which helps when a change is only a few pixels wide.</p>
+</div>
+<div id="continuous-integration" class="section level2">
+<h2>Continuous integration</h2>
+<p><code>snapshot_review()</code> is interactive. On CI, use
+<code>snapshot_report()</code> after the tests: it finds every
+<code>.new.png</code> under <code>tests/testthat/_snaps/</code>,
+compares it with its baseline and writes an HTML report (baseline, new
+and diff images side by side, embedded in one file), a Markdown summary
+or JUnit XML.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># .github/workflows/shinytest2.yaml (excerpt)</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Run tests</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    res &lt;- testthat::test_local(stop_on_failure = FALSE)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    odiffr::snapshot_report(format = &quot;markdown&quot;, preset = &quot;screenshot&quot;)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    odiffr::snapshot_report(output_file = &quot;snapshot-report.html&quot;,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>                            preset = &quot;screenshot&quot;)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    if (any(as.data.frame(res)$failed &gt; 0)) stop(&quot;Tests failed&quot;)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="at">  </span><span class="fu">shell</span><span class="kw">:</span><span class="at"> Rscript {0}</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Upload snapshot report</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> always()</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v4</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> snapshot-report</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="fu">    path</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>      snapshot-report.html</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>      tests/testthat/_snaps/**/*.new.png</span></code></pre></div>
+<p><code>format = &quot;markdown&quot;</code> appends to the job summary page (via
+<code>GITHUB_STEP_SUMMARY</code>). Use the same settings as your tests
+so the report agrees with the test results. The <code>.new.png</code>
+files in the artifact can be copied into <code>_snaps/</code> locally to
+accept the changes.</p>
+</div>
+<div id="variants-or-the-cross_platform-preset" class="section level2">
+<h2>Variants or the cross_platform preset?</h2>
+<p>Screenshots differ between operating systems (fonts, font rendering,
+scrollbars), and between browser versions. There are two strategies:</p>
+<ul>
+<li><strong>Variants</strong> (recommended by shinytest2): store one set
+of screenshots per platform with
+<code>AppDriver$new(variant = platform_variant())</code> and compare
+with <code>preset = &quot;screenshot&quot;</code>. This is the most reliable
+option, but you need to create and update a baseline per platform, and
+you can only update a platform’s screenshots on that platform (or from
+its CI artifacts).</li>
+<li><strong>One shared baseline</strong> compared with
+<code>preset = &quot;cross_platform&quot;</code>. Fewer files, but it only absorbs
+anti-aliasing, sub-pixel and small colour differences. Different fonts
+or text rendering still fail; hide such areas with
+<code>ignore_regions</code>, or take screenshots of selected elements
+(<code>selector</code>) that do not contain text.</li>
+</ul>
+<p>A common compromise is to run screenshot tests on one platform only,
+e.g. with <code>skip_on_os(c(&quot;windows&quot;, &quot;mac&quot;))</code> or by checking an
+environment variable on CI, and keep
+<code>preset = &quot;screenshot&quot;</code>.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

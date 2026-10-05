@@ -10,7 +10,8 @@ odiff_available()
 Logical \code{TRUE} if odiff is found and executable, \code{FALSE} otherwise.
 }
 \description{
-Check if odiff is Available
+A silent check: unlike \code{\link[=find_odiff]{find_odiff()}}, it never offers to install odiff,
+so it is safe to use in skip conditions and scripts.
 }
 \examples{
 odiff_available()

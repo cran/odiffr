@@ -12,18 +12,24 @@ compare_images(
   antialiasing = FALSE,
   fail_on_layout = FALSE,
   ignore_regions = NULL,
+  plot_options = NULL,
   ...
 )
 }
 \arguments{
-\item{img1}{Path to the first image, or a magick-image object.}
+\item{img1}{Path to the first image, a magick-image object, or a plot:
+a ggplot object, a function of no arguments that draws a plot (base or
+grid graphics) or returns a ggplot, lattice or grid object when called,
+or a recorded plot
+(\code{\link[grDevices:recordPlot]{grDevices::recordPlot()}}).}
 
-\item{img2}{Path to the second image, or a magick-image object.}
+\item{img2}{Path to the second image, a magick-image object, or a plot
+(see \code{img1}).}
 
 \item{diff_output}{Path for the diff output image (PNG only). Use \code{NULL}
 for no diff output, or \code{TRUE} to auto-generate a temporary file path.}
 
-\item{threshold}{Numeric; color difference threshold between 0.0 and 1.0.
+\item{threshold}{Numeric; colour difference threshold between 0.0 and 1.0.
 Default is 0.1.}
 
 \item{antialiasing}{Logical; if \code{TRUE}, ignore antialiased pixels.
@@ -36,6 +42,11 @@ dimensions. Default is \code{FALSE}.}
 Use \code{\link[=ignore_region]{ignore_region()}} to create regions, or pass a data.frame with
 columns \code{x1}, \code{y1}, \code{x2}, \code{y2}.}
 
+\item{plot_options}{Options for rendering plot inputs, created with
+\code{\link[=plot_options]{plot_options()}}. \code{NULL} (the default) uses \code{plot_options()}: 7 x 5
+inches at 96 dpi on a white background. Ignored for file and
+magick-image inputs.}
+
 \item{...}{Additional arguments passed to \code{\link[=odiff_run]{odiff_run()}}.}
 }
 \value{
@@ -46,14 +57,20 @@ A tibble (if available) or data.frame with columns:
 \item{diff_count}{Integer; number of different pixels.}
 \item{diff_percentage}{Numeric; percentage of different pixels.}
 \item{diff_output}{Character; path to diff image, or \code{NA}.}
-\item{img1}{Character; path to first image.}
-\item{img2}{Character; path to second image.}
+\item{img1}{Character; path to first image (\code{"<magick-image>"} or
+\code{"<plot>"} for magick-image and plot inputs).}
+\item{img2}{Character; path to second image (labelled as \code{img1}).}
+\item{error}{Character; the error message reported by odiff when
+\code{reason} is \code{"error"} (e.g. an image could not be loaded or has an
+unsupported format), otherwise \code{NA}. This is always the last column.}
 }
 }
 \description{
 High-level function for comparing images with convenient output.
 Returns a tibble if the tibble package is available, otherwise a data.frame.
-Accepts file paths or magick-image objects.
+Accepts file paths, magick-image objects, and plots (ggplot objects,
+functions that draw a plot, or recorded plots), which are rendered to a
+temporary PNG file before comparison.
 }
 \examples{
 \dontrun{
@@ -70,6 +87,16 @@ library(magick)
 img1 <- image_read("baseline.png")
 img2 <- image_read("current.png")
 result <- compare_images(img1, img2)
+
+# Compare a ggplot against a baseline PNG (rendered with ragg if
+# installed, otherwise grDevices::png())
+library(ggplot2)
+p <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
+result <- compare_images("baseline_plot.png", p,
+                         plot_options = plot_options(width = 6, height = 4))
+
+# Base graphics: pass a function that draws the plot
+result <- compare_images("baseline_hist.png", function() hist(mtcars$mpg))
 
 # Ignore specific regions
 result <- compare_images("baseline.png", "current.png",

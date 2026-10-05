@@ -16,8 +16,10 @@ odiff_run(
   diff_color = NULL,
   diff_lines = FALSE,
   reduce_ram = FALSE,
+  enable_asm = FALSE,
   ignore_regions = NULL,
-  timeout = 60
+  timeout = 60,
+  diff_cols = FALSE
 )
 }
 \arguments{
@@ -26,9 +28,12 @@ odiff_run(
 \item{img2}{Character; path to the second (comparison) image file.}
 
 \item{diff_output}{Character or \code{NULL}; optional path for the diff output
-image. Must have \code{.png} extension. If \code{NULL}, no diff image is created.}
+image. odiff only writes PNG: a path with a different extension has it
+replaced by \code{.png}, and a path with no extension gets \code{.png} appended
+(both with a warning). If \code{NULL}, no diff image is created. No diff image
+is written when the images match.}
 
-\item{threshold}{Numeric; color difference threshold between 0.0 and 1.0.
+\item{threshold}{Numeric; colour difference threshold between 0.0 and 1.0.
 Lower values are more precise. Default is 0.1.}
 
 \item{antialiasing}{Logical; if \code{TRUE}, ignore antialiased pixels.
@@ -44,8 +49,9 @@ diff image. Default is \code{FALSE}.}
 1, add a white shaded overlay to the diff image for easier reading.
 Default is \code{NULL} (no overlay).}
 
-\item{diff_color}{Character; hex color for highlighting differences
-(e.g., \code{"#FF0000"}). Default is \code{NULL} (uses odiff default, red).}
+\item{diff_color}{Character; hex color for highlighting differences, in the
+form \code{"#RRGGBB"} or \code{"RRGGBB"} (e.g., \code{"#FF0000"}). Default is \code{NULL}
+(uses odiff default, red).}
 
 \item{diff_lines}{Logical; if \code{TRUE}, include line numbers containing
 different pixels in the output. Default is \code{FALSE}.}
@@ -53,13 +59,25 @@ different pixels in the output. Default is \code{FALSE}.}
 \item{reduce_ram}{Logical; if \code{TRUE}, use less memory but run slower.
 Useful for very large images. Default is \code{FALSE}.}
 
+\item{enable_asm}{Logical; if \code{TRUE}, pass \code{--enable-asm} to the underlying
+\code{odiff} binary to enable assembly-optimised code paths (e.g. AVX-512) on
+supported CPUs. Requires odiff >= 4.1.1. Default is \code{FALSE}.}
+
 \item{ignore_regions}{A list of regions to ignore during comparison. Each
 region should be a list with \code{x1}, \code{y1}, \code{x2}, \code{y2} components, or use
 \code{\link[=ignore_region]{ignore_region()}} to create them. Can also be a data.frame with these
 columns.}
 
 \item{timeout}{Numeric; timeout in seconds for the odiff process.
-Default is 60.}
+Default is 60. Positive values below one second are rounded up to one
+second (the resolution of \code{\link[=system2]{system2()}}); \code{0} or \code{Inf} means no timeout.
+If the timeout is reached, the result has \code{reason = "error"} and an
+\code{error} message.}
+
+\item{diff_cols}{Logical; if \code{TRUE}, include column numbers containing
+different pixels in the output (\code{--output-diff-cols}). Requires
+odiff >= 4.5.0; ignored with a warning for older versions.
+Default is \code{FALSE}.}
 }
 \value{
 A list with the following components:
@@ -67,23 +85,44 @@ A list with the following components:
 \item{match}{Logical; \code{TRUE} if images match, \code{FALSE} otherwise.}
 \item{reason}{Character; one of \code{"match"}, \code{"pixel-diff"},
 \code{"layout-diff"}, or \code{"error"}.}
-\item{diff_count}{Integer; number of different pixels, or \code{NA}.}
-\item{diff_percentage}{Numeric; percentage of different pixels, or \code{NA}.}
+\item{diff_count}{Integer; number of different pixels (\code{0} for a
+match), or \code{NA} if unknown (layout difference or error).}
+\item{diff_percentage}{Numeric; percentage of different pixels (\code{0} for
+a match), or \code{NA} if unknown.}
 \item{diff_lines}{Integer vector of line numbers with differences,
 or \code{NULL}.}
 \item{exit_code}{Integer; odiff exit code (0 = match, 21 = layout diff,
-22 = pixel diff).}
-\item{stdout}{Character; raw stdout output.}
+22 = pixel diff, other values = error).}
+\item{stdout}{Character; raw stdout output (odiff's parsable output).}
 \item{stderr}{Character; raw stderr output.}
+\item{error}{Character; \code{NA} if no error occurred, otherwise the error
+message reported by odiff (or by odiffr, e.g. on timeout).}
 \item{img1}{Character; path to first image.}
 \item{img2}{Character; path to second image.}
 \item{diff_output}{Character or \code{NULL}; path to diff image if created.}
 \item{duration}{Numeric; time elapsed in seconds.}
+\item{diff_cols}{Integer vector of column numbers with differences, or
+\code{NULL}. Only present when \code{diff_cols = TRUE}.}
+\item{params}{Named list of the effective comparison parameters
+(after version guards): \code{threshold}, \code{antialiasing},
+\code{fail_on_layout}, \code{ignore_regions} (formatted as
+\code{"x1:y1-x2:y2,..."}, or \code{NA}), \code{diff_mask}, \code{diff_overlay} (\code{NA} if
+unset), \code{diff_color} (\code{NA} if unset), \code{reduce_ram} and \code{enable_asm}.
+Used by \code{\link[=audit_record]{audit_record()}}.}
 }
 }
 \description{
 Direct wrapper around the odiff CLI with zero external dependencies.
 Returns a structured list with comparison results.
+}
+\details{
+The \code{enable_asm} option is an advanced, platform-specific optimisation flag.
+For odiff < 4.1.1, odiffr ignores \code{enable_asm} with a warning. Behaviour on
+unsupported CPUs is determined by odiff itself.
+
+odiff is always invoked with \code{--parsable-stdout}, and its machine-readable
+output is parsed to fill \code{diff_count}, \code{diff_percentage}, \code{diff_lines} and
+\code{diff_cols}.
 }
 \examples{
 \dontrun{

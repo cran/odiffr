@@ -15,10 +15,42 @@ and validated environments.
 
 \describe{
 \item{\code{\link[=compare_images]{compare_images()}}}{High-level image comparison returning a
-tibble/data.frame. Accepts file paths or magick-image objects.}
+tibble/data.frame. Accepts file paths, magick-image objects and plots.}
+\item{\code{\link[=compare_images_batch]{compare_images_batch()}}, \code{\link[=compare_image_dirs]{compare_image_dirs()}}}{Compare many
+image pairs or two directories of images.}
+\item{\code{\link[=compare_pdfs]{compare_pdfs()}}, \code{\link[=compare_pdf_dirs]{compare_pdf_dirs()}}}{Compare PDF files page by
+page.}
 \item{\code{\link[=odiff_run]{odiff_run()}}}{Low-level CLI wrapper with full control over
 all Odiff options. Returns a detailed result list.}
 \item{\code{\link[=ignore_region]{ignore_region()}}}{Helper to create ignore region specifications.}
+}
+}
+
+\section{Testing}{
+
+
+\describe{
+\item{\code{\link[=expect_images_match]{expect_images_match()}}, \code{\link[=expect_images_differ]{expect_images_differ()}}}{testthat
+expectations for images and plots.}
+\item{\code{\link[=expect_snapshot_image]{expect_snapshot_image()}}}{testthat snapshot expectation compared
+with odiff.}
+\item{\code{\link[=compare_file_odiff]{compare_file_odiff()}}, \code{\link[=odiff_preset]{odiff_preset()}}}{Compare function and
+presets for \code{testthat::expect_snapshot_file()} and 'shinytest2'
+screenshots.}
+}
+}
+
+\section{Reviewing and Reporting}{
+
+
+\describe{
+\item{\code{\link[=batch_report]{batch_report()}}, \code{\link[=batch_markdown]{batch_markdown()}}, \code{\link[=batch_junit]{batch_junit()}}}{HTML,
+Markdown and JUnit reports of batch results.}
+\item{\code{\link[=snapshot_report]{snapshot_report()}}}{Report of changed image snapshots.}
+\item{\code{\link[=use_odiffr_ci]{use_odiffr_ci()}}}{Add a GitHub Actions workflow for visual tests.}
+\item{\code{\link[=approve_changes]{approve_changes()}}}{Accept current images as new baselines.}
+\item{\code{\link[=diff_image]{diff_image()}}, \code{\link[=plot.odiff_result]{plot.odiff_result()}}}{View diff images.}
+\item{\code{\link[=audit_record]{audit_record()}}}{Machine-readable record of comparisons.}
 }
 }
 
@@ -26,6 +58,8 @@ all Odiff options. Returns a detailed result list.}
 
 
 \describe{
+\item{\code{\link[=install_odiff]{install_odiff()}}}{Download Odiff to the user cache (no Node.js
+needed).}
 \item{\code{\link[=find_odiff]{find_odiff()}}}{Locate the Odiff binary using priority search.}
 \item{\code{\link[=odiff_available]{odiff_available()}}}{Check if Odiff is available.}
 \item{\code{\link[=odiff_version]{odiff_version()}}}{Get the Odiff version string.}
@@ -44,7 +78,7 @@ The package searches for the Odiff binary in this order:
 \enumerate{
 \item User-specified path via \code{options(odiffr.path = "/path/to/odiff")}
 \item System PATH (\code{Sys.which("odiff")})
-\item Cached binary from \code{odiffr_update()}
+\item Cached binary from \code{\link[=install_odiff]{install_odiff()}} or \code{odiffr_update()}
 }
 }
 
@@ -52,7 +86,8 @@ The package searches for the Odiff binary in this order:
 
 
 \describe{
-\item{Input}{PNG, JPEG, WEBP, TIFF (cross-format comparison supported)}
+\item{Input}{PNG, JPEG, WEBP, TIFF (\code{.tiff}; \code{.tif} is not accepted by
+odiff) and BMP. Cross-format comparison is supported.}
 \item{Output}{PNG only}
 }
 }
@@ -64,6 +99,7 @@ The package searches for the Odiff binary in this order:
 \item{0}{Images match}
 \item{21}{Layout difference (different dimensions)}
 \item{22}{Pixel differences found}
+\item{1}{Error (e.g. an image could not be read)}
 }
 }
 
@@ -98,6 +134,7 @@ Ben Wolstenholme
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://benwolst.github.io/odiffr/}
   \item \url{https://github.com/BenWolst/odiffr}
   \item Report bugs at \url{https://github.com/BenWolst/odiffr/issues}
 }
@@ -105,6 +142,11 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Ben Wolstenholme \email{odiffr@benwolst.dev}
+
+Authors:
+\itemize{
+  \item Ben Wolstenholme \email{odiffr@benwolst.dev}
+}
 
 }
 \keyword{internal}

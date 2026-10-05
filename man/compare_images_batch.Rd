@@ -17,18 +17,31 @@ file names.}
 \item{parallel}{Logical; if \code{TRUE}, compare images in parallel using
 multiple CPU cores. Uses \code{parallel::mclapply} on Unix systems (macOS,
 Linux) and falls back to sequential processing on Windows. Default is
-\code{FALSE}.}
+\code{FALSE}. The number of cores is taken from \code{getOption("mc.cores")} (or
+detected), capped at the number of pairs, and limited to 2 when the
+\verb{_R_CHECK_LIMIT_CORES_} environment variable is \code{"TRUE"}/\code{"true"} or
+\code{"warn"} (as during \verb{R CMD check --as-cran}).}
 
 \item{...}{Additional arguments passed to \code{\link[=compare_images]{compare_images()}}.}
 }
 \value{
 A tibble (if available) or data.frame with class \code{odiffr_batch},
 containing one row per comparison with all columns from \code{\link[=compare_images]{compare_images()}}
-plus a \code{pair_id} column. Use \code{\link[=summary]{summary()}} to get aggregate statistics.
+(including \code{error}) plus a leading \code{pair_id} column. Use \code{\link[=summary]{summary()}} to
+get aggregate statistics. If \code{pairs} is empty (a zero-row data.frame or
+an empty list), an empty \code{odiffr_batch} with the same columns is
+returned.
 }
 \description{
 Compare multiple pairs of images in batch. Useful for visual regression
 testing across many screenshots.
+}
+\details{
+A failure while comparing one pair (for example, a file that does not
+exist, cannot be read, or has an unsupported format) does not abort the
+batch. Instead, that pair is reported as a row with \code{match = FALSE},
+\code{reason = "error"}, and the error message in the \code{error} column. The same
+applies to failed worker processes when \code{parallel = TRUE}.
 }
 \examples{
 \dontrun{
@@ -46,6 +59,9 @@ results <- compare_images_batch(pairs, parallel = TRUE)
 
 # Check which comparisons failed
 results[!results$match, ]
+
+# Inspect errors (e.g. unreadable or missing files)
+results[results$reason == "error", c("img1", "img2", "error")]
 }
 }
 \seealso{

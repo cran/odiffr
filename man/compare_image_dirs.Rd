@@ -7,7 +7,7 @@
 compare_image_dirs(
   baseline_dir,
   current_dir,
-  pattern = "\\\\.(png|jpe?g|webp|tiff?)$",
+  pattern = "\\\\.(png|jpe?g|webp|tiff|bmp)$",
   recursive = FALSE,
   diff_dir = NULL,
   parallel = FALSE,
@@ -20,8 +20,11 @@ compare_image_dirs(
 \item{current_dir}{Path to the directory containing current images to
 compare against baseline.}
 
-\item{pattern}{Regular expression pattern to match image files. Default
-matches common image formats (PNG, JPEG, WEBP, TIFF).}
+\item{pattern}{Regular expression pattern to match image files (matched
+case-insensitively). The default matches the file extensions accepted
+by odiff: \code{.png}, \code{.jpg}, \code{.jpeg}, \code{.webp}, \code{.tiff} and \code{.bmp}. Note
+that odiff does not accept the \code{.tif} extension; such files
+matched by a custom pattern are reported with \code{reason = "error"}.}
 
 \item{recursive}{Logical; if \code{TRUE}, search subdirectories recursively.
 Default is \code{FALSE}.}
@@ -35,8 +38,10 @@ are created.}
 \item{...}{Additional arguments passed to \code{\link[=compare_images_batch]{compare_images_batch()}}.}
 }
 \value{
-A tibble (if available) or data.frame with one row per comparison,
-containing all columns from \code{\link[=compare_images]{compare_images()}} plus a \code{pair_id} column.
+A tibble (if available) or data.frame with class \code{odiffr_batch},
+with one row per baseline image (in baseline file order), containing all
+columns from \code{\link[=compare_images]{compare_images()}} (including \code{error}) plus a leading
+\code{pair_id} column.
 }
 \description{
 Compare all images in a baseline directory against corresponding images in a
@@ -48,10 +53,18 @@ The baseline directory is the source of truth. For each image found in
 \code{baseline_dir} matching \code{pattern}:
 \itemize{
 \item If a corresponding file exists in \code{current_dir} (same relative
-path), it is included in the comparison.
+path), the two images are compared.
 \item If the file is missing from \code{current_dir}, a warning is issued and
-the file is excluded from results.
+the file is included in the results as a failed row with
+\code{match = FALSE}, \code{reason = "missing"}, \code{NA} diff statistics and
+\code{diff_output}, \code{img2} set to the expected (nonexistent) path, and an
+explanatory \code{error} message. This ensures that a disappearing
+screenshot fails the comparison. If every file is missing, all rows
+are \code{"missing"}.
 }
+
+An error is raised if \code{baseline_dir} contains no images matching
+\code{pattern}.
 
 Files that exist only in \code{current_dir} (not in \code{baseline_dir}) are not
 compared, but a message is emitted noting how many such files were found.
@@ -72,7 +85,7 @@ results <- compare_image_dirs(
   diff_dir = "diffs/"
 )
 
-# Check which comparisons failed
+# Check which comparisons failed (including missing files)
 results[!results$match, ]
 }
 }

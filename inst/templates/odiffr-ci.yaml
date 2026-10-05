@@ -1,0 +1,62 @@
+# Visual regression tests with odiffr, created by odiffr::use_odiffr_ci().
+#
+# Installs odiff with odiffr::install_odiff() (no Node.js needed) and runs
+# the package's testthat tests. If image snapshots changed, a summary is
+# added to the job summary page (odiffr::snapshot_report()) and the new
+# snapshots and diff images are uploaded as the "image-snapshots" artifact.
+#
+# Image snapshots should be recorded on the same operating system as this
+# job (Linux), or use variants / a tolerant preset, e.g.
+# expect_snapshot_image(..., preset = "cross_platform").
+name: odiffr
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-tests:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::testthat, any::odiffr
+
+      - name: Install odiff
+        run: odiffr::install_odiff()
+        shell: Rscript {0}
+
+      - name: Run tests
+        id: tests
+        run: testthat::test_local(reporter = "summary", stop_on_failure = TRUE)
+        shell: Rscript {0}
+
+      - name: Report changed image snapshots
+        if: always() && steps.tests.outcome != 'skipped'
+        run: |
+          if [ -d tests/testthat/_snaps ]; then
+            Rscript -e 'odiffr::snapshot_report(format = "markdown")'
+          fi
+        shell: bash
+
+      - name: Upload changed snapshots and diffs
+        if: failure() && steps.tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-snapshots
+          path: |
+            tests/testthat/_snaps/**/*.new.png
+            tests/testthat/_odiffr/
+          if-no-files-found: ignore

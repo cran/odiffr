@@ -17,13 +17,16 @@
 #'     \item{total}{Total number of comparisons.}
 #'     \item{passed}{Number of matching image pairs.}
 #'     \item{failed}{Number of non-matching image pairs.}
-#'     \item{pass_rate}{Proportion of passing comparisons (0 to 1).}
+#'     \item{pass_rate}{Proportion of passing comparisons (0 to 1), or `NA`
+#'       for an empty batch (zero comparisons).}
 #'     \item{reason_counts}{Table of failure reasons (NULL if no failures).}
 #'     \item{diff_stats}{List with min, median, mean, max diff percentages
 #'       (NULL if no failures with diff data).
 #'     }
-#'     \item{worst}{Data frame of worst offenders by diff percentage
-#'       (NULL if no failures).
+#'     \item{worst}{Data frame of worst offenders, ordered by diff percentage
+#'       (descending). Failures without a diff percentage (e.g. layout
+#'       differences, errors, or missing files) are listed after those with
+#'       one. NULL if no failures.
 #'     }
 #'   }
 #'
@@ -82,10 +85,12 @@ summary.odiffr_batch <- function(object, n_worst = 5, ...) {
     NULL
   }
 
-  # Worst offenders
+  # Worst offenders: rows with a diff_percentage first (descending), then
+  # rows without one (layout-diff, error, missing) in their original order.
   worst <- if (failed > 0) {
     failures <- object[!object$match, ]
-    failures <- failures[order(-failures$diff_percentage, na.last = TRUE), ]
+    dp <- failures$diff_percentage
+    failures <- failures[order(is.na(dp), -dp, seq_along(dp)), ]
     head(failures, n_worst)
   } else {
     NULL
@@ -96,7 +101,7 @@ summary.odiffr_batch <- function(object, n_worst = 5, ...) {
       total = total,
       passed = passed,
       failed = failed,
-      pass_rate = passed / total,
+      pass_rate = if (total > 0) passed / total else NA_real_,
       reason_counts = reason_counts,
       diff_stats = diff_stats,
       worst = worst
@@ -112,8 +117,8 @@ print.odiffr_batch_summary <- function(x, ...) {
   cat("odiffr batch comparison:", x$total, "pairs\n")
   cat(strrep("\u2500", 35), "\n")
 
-  cat(sprintf("Passed: %d (%.1f%%)\n", x$passed, x$pass_rate * 100))
-  cat(sprintf("Failed: %d (%.1f%%)\n", x$failed, (1 - x$pass_rate) * 100))
+  cat(sprintf("Passed: %d (%s)\n", x$passed, .fmt_pct(x$pass_rate * 100, 1)))
+  cat(sprintf("Failed: %d (%s)\n", x$failed, .fmt_pct((1 - x$pass_rate) * 100, 1)))
 
   if (!is.null(x$reason_counts)) {
     for (reason in names(x$reason_counts)) {
@@ -133,17 +138,96 @@ print.odiffr_batch_summary <- function(x, ...) {
     cat("\nWorst offenders:\n")
     for (i in seq_len(nrow(x$worst))) {
       row <- x$worst[i, ]
-      label <- if (!is.na(row$img2) && row$img2 != "<magick-image>") {
-        basename(row$img2)
+      label <- .row_label(row)
+      if (is.na(row$diff_percentage)) {
+        # layout-diff / error / missing rows have no pixel statistics
+        detail <- .row_reason_text(row)
       } else {
-        paste0("pair ", row$pair_id)
+        detail <- sprintf("%s, %s pixels",
+                          .fmt_pct(row$diff_percentage),
+                          .fmt_count(row$diff_count))
       }
-      cat(sprintf("  %d. %s (%.2f%%, %d pixels)\n",
-                  i, label, row$diff_percentage, row$diff_count))
+      cat(sprintf("  %d. %s (%s)\n", i, label, detail))
     }
   }
 
   invisible(x)
+}
+
+
+# Internal: format a percentage, "-" for NA/NaN
+.fmt_pct <- function(x, digits = 2) {
+  out <- sprintf(paste0("%.", digits, "f%%"), x)
+  out[is.na(x)] <- "-"
+  out
+}
+
+# Internal: format a pixel count, "-" for NA
+.fmt_count <- function(x) {
+  out <- formatC(as.numeric(x), format = "d", big.mark = "")
+  out[is.na(x)] <- "-"
+  out
+}
+
+# Internal: plain-text reason for a batch row, including the error message
+# (if an `error` column is present) and a clear label for missing files.
+.row_reason_text <- function(row) {
+  reason <- if ("reason" %in% names(row)) row$reason[[1]] else NA_character_
+  err <- .row_error(row)
+  text <- if (is.na(reason)) {
+    "-"
+  } else if (identical(reason, "missing")) {
+    "missing: no current image"
+  } else {
+    reason
+  }
+  # Missing rows already have a self-explanatory label
+  if (!is.na(err) && !identical(reason, "missing")) {
+    text <- paste0(text, ": ", err)
+  }
+  text
+}
+
+# Internal: TRUE for image paths that do not refer to a file on disk, i.e.
+# NA, "" and placeholder labels such as "<magick-image>" or "<plot>".
+.is_placeholder_path <- function(x) {
+  x <- as.character(x)
+  is.na(x) | !nzchar(x) | grepl("^<.*>$", x)
+}
+
+# Internal: short display label for a batch row: the basename of the current
+# image (img2), or "pair N" when img2 is not a file path (e.g. a magick image
+# or plot). With `use_img1 = TRUE`, the baseline (img1) is tried next.
+.row_label <- function(row, use_img1 = FALSE) {
+  # Snapshot reports carry the snapshot's path relative to _snaps
+  if ("snapshot" %in% names(row)) {
+    snap <- as.character(row$snapshot[[1]])
+    if (!is.na(snap) && nzchar(snap)) return(snap)
+  }
+  img2 <- if ("img2" %in% names(row)) as.character(row$img2[[1]]) else NA_character_
+  if (!.is_placeholder_path(img2)) return(.path_basename(img2))
+  if (use_img1 && "img1" %in% names(row)) {
+    img1 <- as.character(row$img1[[1]])
+    if (!.is_placeholder_path(img1)) return(.path_basename(img1))
+  }
+  paste0("pair ", row$pair_id[[1]])
+}
+
+# Internal: like basename(), but works on the string itself so that UTF-8
+# file names survive in non-UTF-8 locales (basename() translates to the
+# native encoding and fails on unrepresentable characters).
+.path_basename <- function(x, windows = .Platform$OS.type == "windows") {
+  sep <- if (windows) "[/\\\\]" else "/"
+  x <- sub(paste0(sep, "+$"), "", x)
+  sub(paste0("^.*", sep), "", x)
+}
+
+# Internal: error message of a batch row, NA if absent (older objects have
+# no `error` column).
+.row_error <- function(row) {
+  if (!"error" %in% names(row)) return(NA_character_)
+  err <- as.character(row$error[[1]])
+  if (length(err) == 0 || is.na(err) || !nzchar(err)) NA_character_ else err
 }
 
 

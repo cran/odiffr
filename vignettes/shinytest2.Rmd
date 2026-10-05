@@ -1,0 +1,221 @@
+---
+title: "Using odiffr with shinytest2"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using odiffr with shinytest2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Why
+
+[shinytest2](https://rstudio.github.io/shinytest2/) can take screenshots of
+a running Shiny app with `app$expect_screenshot()` and store them as testthat
+snapshots. Its own documentation calls screenshots the most brittle kind of
+expectation, for good reasons:
+
+- By default a screenshot must match the stored snapshot exactly (or within
+  a blur-based threshold). Chromium renders the edges of rounded corners,
+  circles, borders and text with slightly different anti-aliasing from run to
+  run and from machine to machine, so screenshots that look identical often
+  do not match.
+- When a screenshot does change, you get a new `.new.png` file but no
+  picture of *what* changed.
+
+odiffr's `compare_file_odiff()` plugs into the `compare` argument of
+`expect_screenshot()` and addresses both:
+
+- It compares the images with [odiff](https://github.com/dmtrKovalenko/odiff),
+  with a perceptual colour threshold and optional detection of anti-aliased
+  pixels.
+- When a comparison fails, it writes a diff image highlighting the changed
+  pixels and prints where it is.
+
+odiffr does not drive the browser; shinytest2 still takes the screenshots.
+You need the odiff binary (see `vignette("getting-started")`).
+
+## The one-liner
+
+```{r, eval = FALSE}
+library(shinytest2)
+
+test_that("app renders", {
+  app <- AppDriver$new(variant = platform_variant(), name = "app")
+  app$expect_screenshot(
+    compare = odiffr::compare_file_odiff(preset = "screenshot")
+  )
+})
+```
+
+`compare_file_odiff()` returns a function of the old and new screenshot
+paths that returns `TRUE` or `FALSE`, which is what `expect_screenshot()`
+expects. When you supply `compare`, shinytest2's `threshold` and
+`kernel_size` arguments are not used.
+
+## Presets
+
+`preset` chooses the comparison settings (see `?odiff_preset`):
+
+| Preset             | `threshold` | `antialiasing` | Use for |
+|:-------------------|------------:|:---------------|:--------|
+| `"strict"`         | 0           | `FALSE`        | Any pixel change fails |
+| `"default"`        | 0.1         | `FALSE`        | odiffr's usual defaults |
+| `"screenshot"`     | 0.1         | `TRUE`         | Browser screenshots on one platform |
+| `"cross_platform"` | 0.2         | `TRUE`         | Baselines shared across machines |
+
+`"screenshot"` ignores anti-aliased pixels but keeps the colour threshold
+low, so a real colour change is still caught. In odiffr's calibration
+tests, rounded shapes and 1px borders shifted by a quarter or half pixel
+fail with the default settings and pass with `"screenshot"`, while a new
+10 x 10 pixel element or a 10 x 10 pixel patch changing from blue to green
+fails.
+
+`"cross_platform"` also tolerates edges moved by about half a pixel and
+small colour or gamma shifts. The price is that it can miss changes between
+colours of similar brightness (blue to green) and very faint elements.
+
+Arguments you pass explicitly override the preset, and you can still add
+`ignore_regions`, e.g. for a clock or a random plot:
+
+```{r, eval = FALSE}
+app$expect_screenshot(
+  compare = odiffr::compare_file_odiff(
+    preset = "screenshot",
+    threshold = 0.15,
+    ignore_regions = list(odiffr::ignore_region(0, 0, 300, 40))
+  )
+)
+```
+
+## Use it in every test
+
+Define a small helper once in `tests/testthat/setup.R` (or a
+`helper-*.R` file):
+
+```{r, eval = FALSE}
+# tests/testthat/setup.R
+compare_screenshot <- odiffr::compare_file_odiff(preset = "screenshot")
+
+expect_app_screenshot <- function(app, ...) {
+  app$expect_screenshot(..., compare = compare_screenshot)
+}
+```
+
+and use it in your tests:
+
+```{r, eval = FALSE}
+test_that("filters update the table", {
+  app <- AppDriver$new(variant = platform_variant(), name = "filters")
+  app$set_inputs(species = "setosa")
+  expect_app_screenshot(app)
+  expect_app_screenshot(app, selector = "#table")
+})
+```
+
+## Where the diff images go
+
+testthat deletes unrecognised files inside `tests/testthat/_snaps/`, so diff
+images are written elsewhere: by default to `tests/testthat/_odiffr/`,
+mirroring the snapshot layout and named after the snapshot. For example, a
+failing
+
+```
+tests/testthat/_snaps/linux-4.4/app/filters-001.png
+```
+
+produces
+
+```
+tests/testthat/_odiffr/linux-4.4/app/filters-001_diff.png
+```
+
+and the test output shows a message such as
+
+```
+odiff: 1.26% pixels differ (126 px) in 'filters-001.png'; diff image: /path/to/tests/testthat/_odiffr/linux-4.4/app/filters-001_diff.png
+```
+
+Re-running overwrites the diff, and a diff is removed once the screenshot
+matches again. Add `tests/testthat/_odiffr/` to `.gitignore` and
+`^tests/testthat/_odiffr$` to `.Rbuildignore`.
+
+To put the diff images somewhere else, pass `diff_dir`, or set an option in
+`setup.R`; `diff_dir = FALSE` turns them off:
+
+```{r, eval = FALSE}
+options(odiffr.snapshot_diff_dir = file.path(tempdir(), "screenshot-diffs"))
+```
+
+## Reviewing changes
+
+Changed screenshots are handled with testthat's usual tools. Run
+
+```{r, eval = FALSE}
+testthat::snapshot_review("app")
+```
+
+to compare the old and new screenshots side by side, and accept intended
+changes with `testthat::snapshot_accept("app")`. The diff image in
+`_odiffr/` shows exactly which pixels changed, which helps when a change is
+only a few pixels wide.
+
+## Continuous integration
+
+`snapshot_review()` is interactive. On CI, use `snapshot_report()` after the
+tests: it finds every `.new.png` under `tests/testthat/_snaps/`, compares it
+with its baseline and writes an HTML report (baseline, new and diff images
+side by side, embedded in one file), a Markdown summary or JUnit XML.
+
+```yaml
+# .github/workflows/shinytest2.yaml (excerpt)
+- name: Run tests
+  run: |
+    res <- testthat::test_local(stop_on_failure = FALSE)
+    odiffr::snapshot_report(format = "markdown", preset = "screenshot")
+    odiffr::snapshot_report(output_file = "snapshot-report.html",
+                            preset = "screenshot")
+    if (any(as.data.frame(res)$failed > 0)) stop("Tests failed")
+  shell: Rscript {0}
+
+- name: Upload snapshot report
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: snapshot-report
+    path: |
+      snapshot-report.html
+      tests/testthat/_snaps/**/*.new.png
+```
+
+`format = "markdown"` appends to the job summary page (via
+`GITHUB_STEP_SUMMARY`). Use the same settings as your tests so the report
+agrees with the test results. The `.new.png` files in the artifact can be
+copied into `_snaps/` locally to accept the changes.
+
+## Variants or the cross_platform preset?
+
+Screenshots differ between operating systems (fonts, font rendering,
+scrollbars), and between browser versions. There are two strategies:
+
+- **Variants** (recommended by shinytest2): store one set of screenshots per
+  platform with `AppDriver$new(variant = platform_variant())` and compare
+  with `preset = "screenshot"`. This is the most reliable option, but you
+  need to create and update a baseline per platform, and you can only update
+  a platform's screenshots on that platform (or from its CI artifacts).
+- **One shared baseline** compared with `preset = "cross_platform"`. Fewer
+  files, but it only absorbs anti-aliasing, sub-pixel and small colour
+  differences. Different fonts or text rendering still fail; hide such
+  areas with `ignore_regions`, or take screenshots of selected elements
+  (`selector`) that do not contain text.
+
+A common compromise is to run screenshot tests on one platform only, e.g.
+with `skip_on_os(c("windows", "mac"))` or by checking an environment
+variable on CI, and keep `preset = "screenshot"`.
